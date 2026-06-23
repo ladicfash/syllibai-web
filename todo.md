@@ -6,7 +6,7 @@
 - [x] S3 file upload endpoint (multipart, multi-file)
 - [x] LLM integration: flashcards, Cornell notes, mind map, timeline, flowchart, key points, study plan, deadlines, simulation
 - [x] Voice transcription endpoint (Whisper)
-- [ ] File conversion utilities (PDF↔DOCX, image→PDF) via server-side npm packages
+- [x] File conversion utilities (PDF↔DOCX, image→PDF) via server-side npm packages
 
 ## Phase 2: Landing Page & Auth
 - [x] Polished landing page with hero, features grid, quote footer
@@ -19,7 +19,7 @@
 - [x] S3-backed document storage with metadata in DB
 - [x] File preview: PDF viewer (iframe), image preview, text preview
 - [x] Document library with selection, search, and delete
-- [ ] File conversion: PDF→DOCX, DOCX→PDF, image→PDF
+- [x] File conversion: DOCX→PDF, TXT→PDF, TXT→DOCX, image→PDF (JPEG/PNG), with convert modal UI
 
 ## Phase 4: AI Study Tools
 - [x] Flashcard generator with flip-card UI

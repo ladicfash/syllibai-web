@@ -19,6 +19,7 @@ import {
   createShareToken, getShareToken,
 } from "./db";
 import { nanoid } from "nanoid";
+import { docxToText, docxToHtml, textToDocx, imageToPdf, textToPdf } from "./conversion";
 
 // ── Helpers ────────────────────────────────────────────────────────────────
 async function callAI(systemPrompt: string, userContent: string, jsonSchema?: object): Promise<string> {
@@ -131,6 +132,69 @@ export const appRouter = router({
     delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
       await deleteDocument(input.id, ctx.user.id);
       return { success: true };
+    }),
+
+    // ── File Conversion ────────────────────────────────────────────────────
+    convert: protectedProcedure.input(z.object({
+      fileData: z.string(), // base64
+      mimeType: z.string(),
+      originalName: z.string(),
+      targetFormat: z.enum(["pdf", "docx", "txt"]),
+    })).mutation(async ({ ctx, input }) => {
+      const buffer = Buffer.from(input.fileData, "base64");
+      let outputBuffer: Buffer;
+      let outputMime: string;
+      let outputExt: string;
+
+      const src = input.mimeType;
+      const target = input.targetFormat;
+
+      if (src === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" && target === "pdf") {
+        // DOCX → PDF: extract text then render to PDF
+        const text = await docxToText(buffer);
+        const baseName = input.originalName.replace(/\.docx$/i, "");
+        outputBuffer = await textToPdf(text, baseName);
+        outputMime = "application/pdf";
+        outputExt = "pdf";
+      } else if (src === "application/vnd.openxmlformats-officedocument.wordprocessingml.document" && target === "txt") {
+        // DOCX → TXT
+        const text = await docxToText(buffer);
+        outputBuffer = Buffer.from(text, "utf-8");
+        outputMime = "text/plain";
+        outputExt = "txt";
+      } else if ((src === "image/jpeg" || src === "image/jpg" || src === "image/png") && target === "pdf") {
+        // Image → PDF
+        outputBuffer = await imageToPdf(buffer, src);
+        outputMime = "application/pdf";
+        outputExt = "pdf";
+      } else if (src === "text/plain" && target === "docx") {
+        // TXT → DOCX
+        const text = buffer.toString("utf-8");
+        outputBuffer = await textToDocx(text, input.originalName.replace(/\.txt$/i, ""));
+        outputMime = "application/vnd.openxmlformats-officedocument.wordprocessingml.document";
+        outputExt = "docx";
+      } else if (src === "text/plain" && target === "pdf") {
+        // TXT → PDF
+        const text = buffer.toString("utf-8");
+        outputBuffer = await textToPdf(text, input.originalName.replace(/\.txt$/i, ""));
+        outputMime = "application/pdf";
+        outputExt = "pdf";
+      } else {
+        throw new Error(`Conversion from ${src} to ${target} is not supported.`);
+      }
+
+      // Upload converted file to S3
+      const baseName = input.originalName.replace(/\.[^.]+$/, "");
+      const outputFilename = `${baseName}_converted.${outputExt}`;
+      const fileKey = `${ctx.user.id}/converted/${nanoid()}-${outputFilename}`;
+      const { url } = await storagePut(fileKey, outputBuffer, outputMime);
+
+      return {
+        url,
+        filename: outputFilename,
+        mimeType: outputMime,
+        size: outputBuffer.length,
+      };
     }),
   }),
 

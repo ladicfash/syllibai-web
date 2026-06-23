@@ -71,6 +71,9 @@ function AppRoutes() {
       <Route path="/spaced-rep">
         {isAuthenticated ? <StudyLayout><SpacedRep /></StudyLayout> : <Landing />}
       </Route>
+      <Route path="/spaced-repetition">
+        {isAuthenticated ? <StudyLayout><SpacedRep /></StudyLayout> : <Landing />}
+      </Route>
       <Route path="/notes">
         {isAuthenticated ? <StudyLayout><Notes /></StudyLayout> : <Landing />}
       </Route>
@@ -78,6 +81,9 @@ function AppRoutes() {
         {isAuthenticated ? <StudyLayout><Simulations /></StudyLayout> : <Landing />}
       </Route>
       <Route path="/voice">
+        {isAuthenticated ? <StudyLayout><VoiceNotes /></StudyLayout> : <Landing />}
+      </Route>
+      <Route path="/voice-notes">
         {isAuthenticated ? <StudyLayout><VoiceNotes /></StudyLayout> : <Landing />}
       </Route>
 

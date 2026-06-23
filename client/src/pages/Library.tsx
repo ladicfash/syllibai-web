@@ -9,7 +9,7 @@ import { useLocation } from "wouter";
 import {
   Upload, FileText, Image, File, X, Eye, Trash2, Brain, Search,
   Download, ChevronRight, AlertCircle, CheckCircle2, Loader2,
-  FolderOpen, Plus, RefreshCw
+  FolderOpen, Plus, RefreshCw, ArrowRightLeft
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow, format } from "date-fns";
@@ -50,10 +50,31 @@ export default function Library() {
   const [previewDoc, setPreviewDoc] = useState<any>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  const [convertingDoc, setConvertingDoc] = useState<any>(null);
+  const [convertTarget, setConvertTarget] = useState<"pdf" | "docx" | "txt">("pdf");
+  const [convertLoading, setConvertLoading] = useState(false);
+
   const utils = trpc.useUtils();
   const { data: docs, isLoading } = trpc.documents.list.useQuery();
   const uploadMutation = trpc.documents.upload.useMutation();
   const updateTextMutation = trpc.documents.updateText.useMutation();
+  const convertMutation = trpc.documents.convert.useMutation({
+    onSuccess: (data) => {
+      toast.success(`Converted! Downloading ${data.filename}...`);
+      const a = document.createElement("a");
+      a.href = data.url;
+      a.download = data.filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setConvertingDoc(null);
+      setConvertLoading(false);
+    },
+    onError: (err) => {
+      toast.error("Conversion failed: " + err.message);
+      setConvertLoading(false);
+    },
+  });
   const deleteMutation = trpc.documents.delete.useMutation({
     onSuccess: () => {
       utils.documents.list.invalidate();
@@ -251,6 +272,15 @@ export default function Library() {
                   </Button>
                   <Button
                     size="sm"
+                    variant="outline"
+                    className="h-8 w-8 p-0"
+                    title="Convert file format"
+                    onClick={() => { setConvertingDoc(doc); setConvertTarget("pdf"); }}
+                  >
+                    <ArrowRightLeft className="w-3.5 h-3.5" />
+                  </Button>
+                  <Button
+                    size="sm"
                     variant="ghost"
                     className="h-8 w-8 p-0 text-destructive hover:text-destructive"
                     onClick={() => {
@@ -276,6 +306,86 @@ export default function Library() {
               <Upload className="w-4 h-4" /> Upload Your First Document
             </Button>
           )}
+        </div>
+      )}
+
+      {/* Conversion Modal */}
+      {convertingDoc && (
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm flex items-center justify-center p-4 animate-fade-in" onClick={() => setConvertingDoc(null)}>
+          <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md animate-scale-in p-6" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between mb-5">
+              <div>
+                <h3 className="font-semibold flex items-center gap-2"><ArrowRightLeft className="w-4 h-4 text-primary" /> Convert File</h3>
+                <p className="text-xs text-muted-foreground mt-1 truncate max-w-[260px]">{convertingDoc.originalName}</p>
+              </div>
+              <button onClick={() => setConvertingDoc(null)} className="text-muted-foreground hover:text-foreground transition-colors">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="space-y-3 mb-5">
+              <p className="text-sm font-medium text-muted-foreground">Convert to:</p>
+              {/* Only show valid target formats for the source MIME type */}
+              {(() => {
+                const mime = convertingDoc?.mimeType ?? "";
+                let formats: ("pdf" | "docx" | "txt")[] = [];
+                if (mime === "application/vnd.openxmlformats-officedocument.wordprocessingml.document") formats = ["pdf", "txt"];
+                else if (mime === "text/plain") formats = ["pdf", "docx"];
+                else if (mime === "image/jpeg" || mime === "image/jpg" || mime === "image/png") formats = ["pdf"];
+                if (formats.length === 0) return (
+                  <div className="text-center py-4 text-sm text-muted-foreground">
+                    No conversions available for this file type ({mime || "unknown"}).
+                  </div>
+                );
+                return formats.map((fmt) => (
+                  <button
+                    key={fmt}
+                    onClick={() => setConvertTarget(fmt)}
+                    className={cn(
+                      "w-full flex items-center gap-3 px-4 py-3 rounded-xl border-2 transition-all text-left",
+                      convertTarget === fmt
+                        ? "border-primary bg-primary/5 text-primary"
+                        : "border-border hover:border-primary/40"
+                    )}
+                  >
+                    <FileText className="w-4 h-4 flex-shrink-0" />
+                    <div>
+                      <p className="font-medium text-sm">.{fmt.toUpperCase()}</p>
+                      <p className="text-xs text-muted-foreground">
+                        {fmt === "pdf" ? "Portable Document Format" : fmt === "docx" ? "Microsoft Word Document" : "Plain Text File"}
+                      </p>
+                    </div>
+                  </button>
+                ));
+              })()}
+            </div>
+            <Button
+              className="w-full gap-2"
+              disabled={convertLoading}
+              onClick={async () => {
+                if (!convertingDoc) return;
+                setConvertLoading(true);
+                try {
+                  const resp = await fetch(convertingDoc.fileUrl);
+                  const buf = await resp.arrayBuffer();
+                  const uint8 = new Uint8Array(buf);
+                  let binary = "";
+                  for (let i = 0; i < uint8.length; i++) binary += String.fromCharCode(uint8[i]);
+                  const base64 = btoa(binary);
+                  convertMutation.mutate({
+                    fileData: base64,
+                    mimeType: convertingDoc.mimeType,
+                    originalName: convertingDoc.originalName,
+                    targetFormat: convertTarget,
+                  });
+                } catch (err: any) {
+                  toast.error("Failed to fetch file for conversion");
+                  setConvertLoading(false);
+                }
+              }}
+            >
+              {convertLoading ? <><Loader2 className="w-4 h-4 animate-spin" /> Converting...</> : <><ArrowRightLeft className="w-4 h-4" /> Convert & Download</>}
+            </Button>
+          </div>
         </div>
       )}
 
