@@ -14,6 +14,7 @@ import SpacedRep from "./pages/SpacedRep";
 import Notes from "./pages/Notes";
 import Simulations from "./pages/Simulations";
 import VoiceNotes from "./pages/VoiceNotes";
+import Explore from "./pages/Explore";
 import StudyLayout from "./components/StudyLayout";
 import LogoIntro from "./components/LogoIntro";
 import TermsModal from "./components/TermsModal";
@@ -133,6 +134,18 @@ function AppRoutes() {
         </Route>
         <Route path="/voice-notes">
           {isAuthenticated ? <StudyLayout><VoiceNotes /></StudyLayout> : <Landing />}
+        </Route>
+
+        {/* Explore — public but gated */}
+        <Route path="/explore">
+          {isAuthenticated
+            ? <StudyLayout><Explore /></StudyLayout>
+            : <Explore />}
+        </Route>
+        <Route path="/explore/:rest*">
+          {isAuthenticated
+            ? <StudyLayout><Explore /></StudyLayout>
+            : <Explore />}
         </Route>
 
         <Route path="/404" component={NotFound} />

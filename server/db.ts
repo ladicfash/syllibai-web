@@ -269,3 +269,88 @@ export async function getShareToken(token: string) {
   const result = await db.select().from(shareTokens).where(eq(shareTokens.token, token)).limit(1);
   return result[0];
 }
+
+// ── Public Explore / Sharing ───────────────────────────────────────────────
+export async function publishDeck(deckId: number, userId: number, opts: {
+  isPublic: boolean; description?: string; subject?: string; shareSlug: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(flashcardDecks)
+    .set({ isPublic: opts.isPublic, description: opts.description, subject: opts.subject, shareSlug: opts.shareSlug })
+    .where(and(eq(flashcardDecks.id, deckId), eq(flashcardDecks.userId, userId)));
+}
+
+export async function publishNote(noteId: number, userId: number, opts: {
+  isPublic: boolean; subject?: string; shareSlug: string;
+}) {
+  const db = await getDb();
+  if (!db) throw new Error("DB not available");
+  await db.update(notes)
+    .set({ isPublic: opts.isPublic, subject: opts.subject, shareSlug: opts.shareSlug })
+    .where(and(eq(notes.id, noteId), eq(notes.userId, userId)));
+}
+
+export async function getPublicDecks(limit = 40, subject?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  const query = db.select({
+    id: flashcardDecks.id,
+    title: flashcardDecks.title,
+    description: flashcardDecks.description,
+    subject: flashcardDecks.subject,
+    cardCount: flashcardDecks.cardCount,
+    shareSlug: flashcardDecks.shareSlug,
+    createdAt: flashcardDecks.createdAt,
+    authorName: users.name,
+  })
+    .from(flashcardDecks)
+    .leftJoin(users, eq(flashcardDecks.userId, users.id))
+    .where(eq(flashcardDecks.isPublic, true))
+    .orderBy(desc(flashcardDecks.createdAt))
+    .limit(limit);
+  return query;
+}
+
+export async function getPublicNotes(limit = 40, subject?: string) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select({
+    id: notes.id,
+    title: notes.title,
+    subject: notes.subject,
+    shareSlug: notes.shareSlug,
+    color: notes.color,
+    createdAt: notes.createdAt,
+    authorName: users.name,
+    // Truncated preview — first 200 chars
+    preview: notes.content,
+  })
+    .from(notes)
+    .leftJoin(users, eq(notes.userId, users.id))
+    .where(eq(notes.isPublic, true))
+    .orderBy(desc(notes.createdAt))
+    .limit(limit);
+}
+
+export async function getDeckBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(flashcardDecks)
+    .where(and(eq(flashcardDecks.shareSlug, slug), eq(flashcardDecks.isPublic, true))).limit(1);
+  return result[0];
+}
+
+export async function getNoteBySlug(slug: string) {
+  const db = await getDb();
+  if (!db) return undefined;
+  const result = await db.select().from(notes)
+    .where(and(eq(notes.shareSlug, slug), eq(notes.isPublic, true))).limit(1);
+  return result[0];
+}
+
+export async function getPublicCardsByDeck(deckId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(flashcards).where(eq(flashcards.deckId, deckId));
+}

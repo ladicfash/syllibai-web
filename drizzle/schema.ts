@@ -44,6 +44,11 @@ export const flashcardDecks = mysqlTable("flashcard_decks", {
   userId: int("userId").notNull(),
   documentId: int("documentId"),
   title: varchar("title", { length: 256 }).notNull(),
+  description: text("description"),
+  isPublic: boolean("isPublic").default(false).notNull(),
+  shareSlug: varchar("shareSlug", { length: 128 }).unique(),
+  subject: varchar("subject", { length: 128 }),
+  cardCount: int("cardCount").default(0).notNull(),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -84,6 +89,9 @@ export const notes = mysqlTable("notes", {
   content: text("content").notNull(),
   color: varchar("color", { length: 32 }).default("#fef3c7").notNull(),
   isPinned: boolean("isPinned").default(false).notNull(),
+  isPublic: boolean("isPublic").default(false).notNull(),
+  shareSlug: varchar("shareSlug", { length: 128 }).unique(),
+  subject: varchar("subject", { length: 128 }),
   createdAt: timestamp("createdAt").defaultNow().notNull(),
   updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
 });
@@ -151,3 +159,4 @@ export type Note = typeof notes.$inferSelect;
 export type Task = typeof tasks.$inferSelect;
 export type TimerSession = typeof timerSessions.$inferSelect;
 export type AiOutput = typeof aiOutputs.$inferSelect;
+export type FlashcardDeckWithCount = FlashcardDeck & { cardCount: number };

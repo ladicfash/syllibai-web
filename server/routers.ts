@@ -18,6 +18,9 @@ import {
   saveTimerSession, getTimerHistory,
   saveAiOutput, getAiOutput,
   createShareToken, getShareToken,
+  publishDeck, publishNote,
+  getPublicDecks, getPublicNotes,
+  getDeckBySlug, getNoteBySlug, getPublicCardsByDeck,
 } from "./db";
 import { nanoid } from "nanoid";
 import { docxToText, docxToHtml, textToDocx, imageToPdf, textToPdf } from "./conversion";
@@ -770,6 +773,50 @@ return { response: (typeof simContent === 'string' ? simContent.trim() : JSON.st
       const noteIds = JSON.parse(shareToken.noteIds) as number[];
       const allNotes = await getNotesByIds(noteIds, shareToken.userId);
       return { notes: allNotes.filter((n) => noteIds.includes(n.id)) };
+    }),
+    publishDeck: protectedProcedure.input(z.object({
+      deckId: z.number(),
+      isPublic: z.boolean(),
+      description: z.string().optional(),
+      subject: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const slug = `deck-${input.deckId}-${Math.random().toString(36).slice(2, 8)}`;
+      await publishDeck(input.deckId, ctx.user.id, { ...input, shareSlug: slug });
+      return { slug };
+    }),
+    publishNote: protectedProcedure.input(z.object({
+      noteId: z.number(),
+      isPublic: z.boolean(),
+      subject: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const slug = `note-${input.noteId}-${Math.random().toString(36).slice(2, 8)}`;
+      await publishNote(input.noteId, ctx.user.id, { ...input, shareSlug: slug });
+      return { slug };
+    }),
+  }),
+
+  explore: router({
+    decks: publicProcedure.input(z.object({ subject: z.string().optional() }).optional()).query(async ({ input }) => {
+      return getPublicDecks(40, input?.subject);
+    }),
+    notes: publicProcedure.input(z.object({ subject: z.string().optional() }).optional()).query(async ({ input }) => {
+      return getPublicNotes(40, input?.subject);
+    }),
+    deckBySlug: publicProcedure.input(z.object({ slug: z.string() })).query(async ({ input }) => {
+      const deck = await getDeckBySlug(input.slug);
+      if (!deck) throw new Error("Study set not found");
+      return deck;
+    }),
+    noteBySlug: publicProcedure.input(z.object({ slug: z.string() })).query(async ({ input }) => {
+      const note = await getNoteBySlug(input.slug);
+      if (!note) throw new Error("Note not found");
+      return note;
+    }),
+    deckCards: publicProcedure.input(z.object({ deckId: z.number() })).query(async ({ ctx, input }) => {
+      // Logged-out users get first 3 cards only (Quizlet-style gating)
+      const cards = await getPublicCardsByDeck(input.deckId);
+      if (!ctx.user) return { cards: cards.slice(0, 3), locked: cards.length > 3, total: cards.length };
+      return { cards, locked: false, total: cards.length };
     }),
   }),
 });

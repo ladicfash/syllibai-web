@@ -57,9 +57,21 @@
 - [x] Final checkpoint and delivery
 
 ## Phase 8: Fixes & New Features
-- [ ] Fix PDF text extraction (pdf-parse ESM/CJS import error)
-- [ ] Fix DOCX text extraction (mammoth)
-- [ ] Add syllabus upload with AI deadline extraction and auto-task creation in Planner
-- [ ] Draft Terms & Conditions content (privacy, usage, AI disclaimer)
-- [ ] Add hasAcceptedTerms column to users table
-- [ ] Build first-time T&C agreement modal (two checkboxes required, stored in DB, blocks app until accepted)
+- [x] Fix PDF text extraction (pdf-parse ESM/CJS import error)
+- [x] Fix DOCX text extraction (mammoth)
+- [x] Add syllabus upload with AI deadline extraction and auto-task creation in Planner
+- [x] Draft Terms & Conditions content (privacy, usage, AI disclaimer)
+- [x] Add acceptedTermsAt + termsVersion columns to users table
+- [x] Build first-time T&C agreement modal (3 checkboxes required, stored in DB, blocks app until accepted)
+
+## Phase 9: UI Revamp & Collaboration
+- [ ] Revamp sidebar navigation: cleaner grouping, better icons, section labels
+- [ ] Revamp dashboard home: stats widgets, recent activity, quick actions
+- [ ] Revamp landing page: tighter SaaS feel, better hero copy, feature highlights
+- [ ] Add public Explore/Discover page (no login required to browse)
+- [ ] Quizlet-style gating: public can see titles/previews, login required for full content
+- [ ] Add isPublic flag to notes, flashcard decks, and study sets in DB schema
+- [ ] Build Share popup: choose content type (notes/decks), select items, set visibility (public/link/collab)
+- [ ] Build Collab Space: shared study sets visible to invited users or public
+- [ ] Add public profile page: user's shared decks and notes browsable by others
+- [ ] Access gate component: blur/lock overlay on content for logged-out users

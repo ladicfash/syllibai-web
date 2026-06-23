@@ -6,7 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Plus, Pin, PinOff, Trash2, Share2, Edit3, Check, X, Search, Mail } from "lucide-react";
+import { Plus, Pin, PinOff, Trash2, Share2, Edit3, Check, X, Search, Mail, Globe } from "lucide-react";
+import { SharePopup } from "@/components/SharePopup";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
@@ -80,6 +81,7 @@ export default function Notes() {
   const [search, setSearch] = useState("");
   const [showAdd, setShowAdd] = useState(false);
   const [showShare, setShowShare] = useState(false);
+  const [showSharePopup, setShowSharePopup] = useState(false);
   const [newTitle, setNewTitle] = useState("Untitled Note");
   const [newContent, setNewContent] = useState("");
   const [newColor, setNewColor] = useState("#fef9c3");
@@ -130,6 +132,9 @@ export default function Notes() {
               <Share2 className="w-3.5 h-3.5" /> Share {selectedNotes.size} Note{selectedNotes.size !== 1 ? "s" : ""}
             </Button>
           )}
+          <Button variant="outline" size="sm" onClick={() => setShowSharePopup(true)} className="gap-1.5">
+            <Globe className="w-3.5 h-3.5" /> Share to Explore
+          </Button>
           <Button size="sm" onClick={() => setShowAdd(true)} className="gap-1.5">
             <Plus className="w-4 h-4" /> New Note
           </Button>
@@ -222,6 +227,9 @@ export default function Notes() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Share to Explore Popup */}
+      <SharePopup open={showSharePopup} onClose={() => setShowSharePopup(false)} />
 
       {/* Share Dialog */}
       <Dialog open={showShare} onOpenChange={setShowShare}>
