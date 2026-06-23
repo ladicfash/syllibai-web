@@ -94,3 +94,13 @@
 - [x] Add video_notes table to DB schema with 20-video cap per user
 - [x] Wire video notes server routes (upload, list, delete, transcribe)
 - [x] Add Video Notes to sidebar navigation
+
+## Phase 12: Sign-in Fix, Notes Folders & AI Save
+- [ ] Fix OAuth sign-in URL redirect error (callback URL mismatch or redirect loop)
+- [ ] Fix Mermaid mind map parse error (sanitize special chars in node labels)
+- [ ] Add note_folders table to DB schema (id, userId, name, isPinned, createdAt)
+- [ ] Add folderId column to notes table
+- [ ] Wire folder server routes: createFolder, listFolders, updateFolder, deleteFolder, moveNoteToFolder
+- [ ] Build folder UI in Notes page: create/rename/delete folders, pin folders, expand/collapse folders
+- [ ] Add "Save to Notes" button in AI Study Tools for all output types (flashcards, Cornell, mind map, timeline, flowchart, key points)
+- [ ] Allow saving voice note audio to both Voice Notes section and Notes folder

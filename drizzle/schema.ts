@@ -88,6 +88,7 @@ export const notes = mysqlTable("notes", {
   title: varchar("title", { length: 256 }).default("Untitled Note").notNull(),
   content: text("content").notNull(),
   color: varchar("color", { length: 32 }).default("#fef3c7").notNull(),
+  folderId: int("folderId"),
   isPinned: boolean("isPinned").default(false).notNull(),
   isPublic: boolean("isPublic").default(false).notNull(),
   shareSlug: varchar("shareSlug", { length: 128 }).unique(),
@@ -217,3 +218,15 @@ export type VoiceNote = typeof voiceNotes.$inferSelect;
 export type InsertVoiceNote = typeof voiceNotes.$inferInsert;
 export type VideoNote = typeof videoNotes.$inferSelect;
 export type InsertVideoNote = typeof videoNotes.$inferInsert;
+
+export const noteFolders = mysqlTable("note_folders", {
+  id: int("id").autoincrement().primaryKey(),
+  userId: int("userId").notNull(),
+  name: varchar("name", { length: 256 }).notNull(),
+  color: varchar("color", { length: 32 }).default("#3b9edd").notNull(),
+  isPinned: boolean("isPinned").default(false).notNull(),
+  createdAt: timestamp("createdAt").defaultNow().notNull(),
+  updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+});
+export type NoteFolder = typeof noteFolders.$inferSelect;
+export type InsertNoteFolder = typeof noteFolders.$inferInsert;

@@ -10,8 +10,10 @@ import { useSearch } from "wouter";
 import {
   Brain, FileText, GitBranch, Clock3, Workflow, Sparkles,
   Volume2, VolumeX, Loader2, RefreshCw, Copy, CheckCheck,
-  ChevronLeft, ChevronRight, RotateCcw, BookOpen, Zap
+  ChevronLeft, ChevronRight, RotateCcw, BookOpen, Zap,
+  BookmarkPlus, FolderOpen
 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Streamdown } from "streamdown";
 import { cn } from "@/lib/utils";
 
@@ -227,6 +229,26 @@ export default function StudyTools() {
   const [flowchartCode, setFlowchartCode] = useState("");
   const [keyPointsContent, setKeyPointsContent] = useState("");
 
+  // Save to Notes
+  const { data: folders = [] } = trpc.folders.list.useQuery();
+  const [showSaveDialog, setShowSaveDialog] = useState(false);
+  const [saveContent, setSaveContent] = useState("");
+  const [saveTitle, setSaveTitle] = useState("");
+  const [saveFolderId, setSaveFolderId] = useState<number | "">("");
+  const createNote = trpc.notes.create.useMutation({
+    onSuccess: () => {
+      setShowSaveDialog(false);
+      toast.success("Saved to Notes!");
+    },
+  });
+
+  const openSaveDialog = (title: string, content: string) => {
+    setSaveTitle(title);
+    setSaveContent(content);
+    setSaveFolderId("");
+    setShowSaveDialog(true);
+  };
+
   const getDocText = () => selectedDoc?.extractedText ?? "";
 
   const runAI = async (tab: string) => {
@@ -377,6 +399,11 @@ export default function StudyTools() {
                   Copy
                 </Button>
               )}
+              {cornellContent && (
+                <Button variant="outline" size="sm" onClick={() => openSaveDialog(`Cornell Notes — ${selectedDoc?.originalName ?? "Document"}`, cornellContent)} className="gap-1.5">
+                  <BookmarkPlus className="w-3.5 h-3.5" /> Save to Notes
+                </Button>
+              )}
               <Button onClick={() => runAI("cornell")} disabled={!selectedDocId || isLoading("cornell")} className="gap-2">
                 {isLoading("cornell") ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 Generate
@@ -408,10 +435,17 @@ export default function StudyTools() {
               <h2 className="font-semibold">Mind Map</h2>
               <p className="text-sm text-muted-foreground">Visual concept hierarchy rendered with Mermaid.js</p>
             </div>
-            <Button onClick={() => runAI("mindmap")} disabled={!selectedDocId || isLoading("mindmap")} className="gap-2">
-              {isLoading("mindmap") ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              Generate
-            </Button>
+            <div className="flex gap-2">
+              {mindMapCode && (
+                <Button variant="outline" size="sm" onClick={() => openSaveDialog(`Mind Map — ${selectedDoc?.originalName ?? "Document"}`, mindMapCode)} className="gap-1.5">
+                  <BookmarkPlus className="w-3.5 h-3.5" /> Save to Notes
+                </Button>
+              )}
+              <Button onClick={() => runAI("mindmap")} disabled={!selectedDocId || isLoading("mindmap")} className="gap-2">
+                {isLoading("mindmap") ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                Generate
+              </Button>
+            </div>
           </div>
           {mindMapMut.isPending ? (
             <Skeleton className="h-64 w-full rounded-xl" />
@@ -434,10 +468,17 @@ export default function StudyTools() {
               <h2 className="font-semibold">Timeline</h2>
               <p className="text-sm text-muted-foreground">Chronological events rendered as a visual timeline</p>
             </div>
-            <Button onClick={() => runAI("timeline")} disabled={!selectedDocId || isLoading("timeline")} className="gap-2">
-              {isLoading("timeline") ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              Generate
-            </Button>
+            <div className="flex gap-2">
+              {timelineCode && (
+                <Button variant="outline" size="sm" onClick={() => openSaveDialog(`Timeline — ${selectedDoc?.originalName ?? "Document"}`, timelineCode)} className="gap-1.5">
+                  <BookmarkPlus className="w-3.5 h-3.5" /> Save to Notes
+                </Button>
+              )}
+              <Button onClick={() => runAI("timeline")} disabled={!selectedDocId || isLoading("timeline")} className="gap-2">
+                {isLoading("timeline") ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                Generate
+              </Button>
+            </div>
           </div>
           {timelineMut.isPending ? (
             <Skeleton className="h-64 w-full rounded-xl" />
@@ -460,10 +501,17 @@ export default function StudyTools() {
               <h2 className="font-semibold">Flowchart</h2>
               <p className="text-sm text-muted-foreground">Process flow rendered as an interactive diagram</p>
             </div>
-            <Button onClick={() => runAI("flowchart")} disabled={!selectedDocId || isLoading("flowchart")} className="gap-2">
-              {isLoading("flowchart") ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-              Generate
-            </Button>
+            <div className="flex gap-2">
+              {flowchartCode && (
+                <Button variant="outline" size="sm" onClick={() => openSaveDialog(`Flowchart — ${selectedDoc?.originalName ?? "Document"}`, flowchartCode)} className="gap-1.5">
+                  <BookmarkPlus className="w-3.5 h-3.5" /> Save to Notes
+                </Button>
+              )}
+              <Button onClick={() => runAI("flowchart")} disabled={!selectedDocId || isLoading("flowchart")} className="gap-2">
+                {isLoading("flowchart") ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
+                Generate
+              </Button>
+            </div>
           </div>
           {flowchartMut.isPending ? (
             <Skeleton className="h-64 w-full rounded-xl" />
@@ -494,6 +542,11 @@ export default function StudyTools() {
                   Copy
                 </Button>
               )}
+              {keyPointsContent && (
+                <Button variant="outline" size="sm" onClick={() => openSaveDialog(`Key Points — ${selectedDoc?.originalName ?? "Document"}`, keyPointsContent)} className="gap-1.5">
+                  <BookmarkPlus className="w-3.5 h-3.5" /> Save to Notes
+                </Button>
+              )}
               <Button onClick={() => runAI("keypoints")} disabled={!selectedDocId || isLoading("keypoints")} className="gap-2">
                 {isLoading("keypoints") ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
                 Generate
@@ -518,6 +571,51 @@ export default function StudyTools() {
           )}
         </TabsContent>
       </Tabs>
+
+      {/* Save to Notes Dialog */}
+      <Dialog open={showSaveDialog} onOpenChange={setShowSaveDialog}>
+        <DialogContent className="sm:max-w-sm">
+          <DialogHeader><DialogTitle className="flex items-center gap-2"><BookmarkPlus className="w-5 h-5" /> Save to Notes</DialogTitle></DialogHeader>
+          <div className="space-y-4 py-2">
+            <div>
+              <label className="text-sm font-medium text-foreground">Note title</label>
+              <input
+                value={saveTitle}
+                onChange={e => setSaveTitle(e.target.value)}
+                className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+              />
+            </div>
+            {folders.length > 0 && (
+              <div>
+                <label className="text-sm font-medium text-foreground flex items-center gap-1.5"><FolderOpen className="w-3.5 h-3.5" /> Save to folder (optional)</label>
+                <select
+                  value={saveFolderId}
+                  onChange={e => setSaveFolderId(e.target.value ? Number(e.target.value) : "")}
+                  className="mt-1 w-full rounded-md border border-input bg-background px-3 py-2 text-sm text-foreground"
+                >
+                  <option value="">No folder</option>
+                  {folders.map(f => <option key={f.id} value={f.id}>{f.name}</option>)}
+                </select>
+              </div>
+            )}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSaveDialog(false)}>Cancel</Button>
+            <Button
+              onClick={() => createNote.mutate({
+                title: saveTitle,
+                content: saveContent,
+                ...(saveFolderId !== "" ? { folderId: Number(saveFolderId) } : {}),
+              } as any)}
+              disabled={createNote.isPending || !saveTitle.trim()}
+              className="gap-1.5"
+            >
+              {createNote.isPending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <BookmarkPlus className="w-3.5 h-3.5" />}
+              Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

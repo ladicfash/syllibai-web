@@ -24,6 +24,7 @@ import {
   getUserSettings, upsertUserSettings,
   createVoiceNote, getVoiceNotesByUser, updateVoiceNoteTranscript, deleteVoiceNote,
   createVideoNote, getVideoNotesByUser, countVideoNotesByUser, updateVideoNoteTranscript, deleteVideoNote,
+  createNoteFolder, getNoteFoldersByUser, updateNoteFolder, deleteNoteFolder, moveNoteToFolder,
 } from "./db";
 import { nanoid } from "nanoid";
 import { docxToText, docxToHtml, textToDocx, imageToPdf, textToPdf } from "./conversion";
@@ -340,26 +341,53 @@ export const appRouter = router({
       documentId: z.number(),
       text: z.string().max(8000),
     })).mutation(async ({ ctx, input }) => {
-      const content = await callAI(
-        `You are an expert study assistant. Create a Mermaid.js mindmap diagram from the provided text. 
-Rules:
-- Output ONLY the raw Mermaid code, no markdown fences, no explanation
-- Start with: mindmap
-- Use proper indentation for hierarchy
-- Keep node labels under 50 characters
-- Use double quotes for labels with special characters
+      const raw = await callAI(
+        `You are an expert study assistant. Create a Mermaid.js mindmap diagram from the provided text.
+CRITICAL RULES — violating any of these will break the diagram:
+- Output ONLY raw Mermaid code, no markdown fences, no explanation, no comments
+- First line must be exactly: mindmap
+- Second line must be the root node: root((Topic))
+- Use ONLY plain text in node labels — absolutely NO parentheses (), NO commas, NO quotes, NO colons, NO special characters
+- Replace commas with spaces, parentheses with spaces, colons with dashes
+- Keep each label under 40 characters
+- Use 2-space indentation for each level
 - Create 3-4 levels of hierarchy
 - Include 5-8 main branches
+BAD example (DO NOT do this): SubTopic(Jira, Monday.com)
+GOOD example: SubTopic Jira Monday
 Example format:
 mindmap
   root((Main Topic))
-    Branch1
-      SubTopic1
-      SubTopic2
-    Branch2
-      SubTopic3`,
+    Branch One
+      SubTopic A
+      SubTopic B
+    Branch Two
+      SubTopic C`,
         input.text
       );
+      // Server-side sanitization: strip chars that break Mermaid mindmap parser
+      const content = raw
+        .replace(/```mermaid\n?/g, "").replace(/```\n?/g, "").trim()
+        .split("\n")
+        .map((line) => {
+          // Only sanitize non-root lines (lines with node labels after indentation)
+          const indent = line.match(/^(\s*)/)?.[1] ?? "";
+          const label = line.slice(indent.length);
+          // Skip diagram keyword lines
+          if (label === "mindmap" || label.startsWith("root(")) return line;
+          // Remove parentheses content that isn't a valid Mermaid shape
+          // Keep ((text)) and [text] and {text} shapes but strip bare parens
+          const sanitized = label
+            .replace(/\((?![([{])/g, " ")  // opening paren not followed by shape char
+            .replace(/(?<![)\]}])\)/g, " ") // closing paren not preceded by shape char
+            .replace(/,/g, " ")             // commas → spaces
+            .replace(/"/g, "")              // remove stray quotes
+            .replace(/:/g, " -")            // colons → dash
+            .replace(/  +/g, " ")          // collapse multiple spaces
+            .trim();
+          return indent + sanitized;
+        })
+        .join("\n");
       await saveAiOutput(ctx.user.id, input.documentId, "mind_map", content);
       return { content };
     }),
@@ -619,22 +647,23 @@ return { response: (typeof simContent === 'string' ? simContent.trim() : JSON.st
   notes: router({
     list: protectedProcedure.query(({ ctx }) => getNotesByUser(ctx.user.id)),
 
-    create: protectedProcedure.input(z.object({
+        create: protectedProcedure.input(z.object({
       title: z.string().default("Untitled Note"),
       content: z.string(),
       color: z.string().optional(),
       documentId: z.number().optional(),
+      folderId: z.number().optional(),
     })).mutation(async ({ ctx, input }) => {
       await createNote({ userId: ctx.user.id, ...input });
       return { success: true };
     }),
-
     update: protectedProcedure.input(z.object({
       id: z.number(),
       title: z.string().optional(),
       content: z.string().optional(),
       color: z.string().optional(),
       isPinned: z.boolean().optional(),
+      folderId: z.number().nullable().optional(),
     })).mutation(async ({ ctx, input }) => {
       const { id, ...data } = input;
       await updateNote(id, ctx.user.id, data);
@@ -667,6 +696,38 @@ return { response: (typeof simContent === 'string' ? simContent.trim() : JSON.st
   }),
 
   // ── Tasks ─────────────────────────────────────────────────────────────────
+  // ── Note Folders ──────────────────────────────────────────────────────────
+  folders: router({
+    list: protectedProcedure.query(({ ctx }) => getNoteFoldersByUser(ctx.user.id)),
+    create: protectedProcedure.input(z.object({
+      name: z.string().min(1).max(256),
+      color: z.string().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const id = await createNoteFolder(ctx.user.id, input.name, input.color);
+      return { success: true, id };
+    }),
+    update: protectedProcedure.input(z.object({
+      id: z.number(),
+      name: z.string().optional(),
+      color: z.string().optional(),
+      isPinned: z.boolean().optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { id, ...data } = input;
+      await updateNoteFolder(id, ctx.user.id, data);
+      return { success: true };
+    }),
+    delete: protectedProcedure.input(z.object({ id: z.number() })).mutation(async ({ ctx, input }) => {
+      await deleteNoteFolder(input.id, ctx.user.id);
+      return { success: true };
+    }),
+    moveNote: protectedProcedure.input(z.object({
+      noteId: z.number(),
+      folderId: z.number().nullable(),
+    })).mutation(async ({ ctx, input }) => {
+      await moveNoteToFolder(input.noteId, ctx.user.id, input.folderId);
+      return { success: true };
+    }),
+  }),
   tasks: router({
     list: protectedProcedure.query(({ ctx }) => getTasksByUser(ctx.user.id)),
 

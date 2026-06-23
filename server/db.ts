@@ -3,7 +3,7 @@ import { drizzle } from "drizzle-orm/mysql2";
 import {
   users, documents, flashcardDecks, flashcards, notes, tasks,
   timerSessions, aiOutputs, quizSessions, shareTokens, userSettings,
-  voiceNotes, videoNotes,
+  voiceNotes, videoNotes, noteFolders,
   type InsertUser, type Document, type InsertDocument,
 } from "../drizzle/schema";
 
@@ -449,4 +449,38 @@ export async function upsertUserSettings(userId: number, data: {
     }
   }
   await db.insert(userSettings).values(values as Parameters<typeof db.insert>[0] extends infer T ? T extends { values: (v: infer V) => unknown } ? V : never : never).onDuplicateKeyUpdate({ set: updateSet });
+}
+
+// ── Note Folders ──────────────────────────────────────────────────────────
+export async function createNoteFolder(userId: number, name: string, color?: string) {
+  const db = await getDb();
+  if (!db) return null;
+  const result = await db.insert(noteFolders).values({ userId, name, color: color ?? "#3b9edd" });
+  return (result as any)[0]?.insertId ?? null;
+}
+
+export async function getNoteFoldersByUser(userId: number) {
+  const db = await getDb();
+  if (!db) return [];
+  return db.select().from(noteFolders).where(eq(noteFolders.userId, userId)).orderBy(desc(noteFolders.isPinned), noteFolders.createdAt);
+}
+
+export async function updateNoteFolder(id: number, userId: number, data: { name?: string; color?: string; isPinned?: boolean }) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(noteFolders).set(data).where(and(eq(noteFolders.id, id), eq(noteFolders.userId, userId)));
+}
+
+export async function deleteNoteFolder(id: number, userId: number) {
+  const db = await getDb();
+  if (!db) return;
+  // Unset folderId on all notes in this folder first
+  await db.update(notes).set({ folderId: null }).where(and(eq(notes.folderId, id), eq(notes.userId, userId)));
+  await db.delete(noteFolders).where(and(eq(noteFolders.id, id), eq(noteFolders.userId, userId)));
+}
+
+export async function moveNoteToFolder(noteId: number, userId: number, folderId: number | null) {
+  const db = await getDb();
+  if (!db) return;
+  await db.update(notes).set({ folderId }).where(and(eq(notes.id, noteId), eq(notes.userId, userId)));
 }
