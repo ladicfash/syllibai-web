@@ -134,6 +134,45 @@ export const appRouter = router({
       return { success: true };
     }),
 
+    // ── Image OCR ──────────────────────────────────────────────────────────
+    ocr: protectedProcedure.input(z.object({
+      documentId: z.number(),
+      fileKey: z.string(),
+    })).mutation(async ({ ctx, input }) => {
+      // Get a signed URL so the LLM vision model can fetch the image
+      const { storageGetSignedUrl } = await import('./storage');
+      const imageUrl = await storageGetSignedUrl(input.fileKey);
+
+      const res = await invokeLLM({
+        messages: [
+          {
+            role: "system",
+            content: "You are an expert OCR assistant. Extract ALL text from the provided image exactly as it appears, preserving structure, line breaks, headings, and lists. Do not summarize or interpret — output the raw text only.",
+          },
+          {
+            role: "user",
+            content: [
+              {
+                type: "image_url",
+                image_url: { url: imageUrl, detail: "high" },
+              },
+              { type: "text", text: "Extract all text from this image." },
+            ],
+          },
+        ],
+      });
+
+      const extractedText = (typeof res.choices[0].message.content === "string"
+        ? res.choices[0].message.content
+        : JSON.stringify(res.choices[0].message.content)
+      ).trim();
+
+      const wordCount = extractedText.split(/\s+/).filter(Boolean).length;
+      await updateDocumentText(input.documentId, extractedText, wordCount);
+
+      return { extractedText, wordCount };
+    }),
+
     // ── File Conversion ────────────────────────────────────────────────────
     convert: protectedProcedure.input(z.object({
       fileData: z.string(), // base64

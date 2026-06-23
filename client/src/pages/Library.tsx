@@ -53,6 +53,7 @@ export default function Library() {
   const [convertingDoc, setConvertingDoc] = useState<any>(null);
   const [convertTarget, setConvertTarget] = useState<"pdf" | "docx" | "txt">("pdf");
   const [convertLoading, setConvertLoading] = useState(false);
+  const [ocrDocId, setOcrDocId] = useState<number | null>(null);
 
   const utils = trpc.useUtils();
   const { data: docs, isLoading } = trpc.documents.list.useQuery();
@@ -75,6 +76,18 @@ export default function Library() {
       setConvertLoading(false);
     },
   });
+  const ocrMutation = trpc.documents.ocr.useMutation({
+    onSuccess: (data) => {
+      utils.documents.list.invalidate();
+      toast.success(`OCR complete — ${data.wordCount.toLocaleString()} words extracted!`);
+      setOcrDocId(null);
+    },
+    onError: (err) => {
+      toast.error("OCR failed: " + err.message);
+      setOcrDocId(null);
+    },
+  });
+
   const deleteMutation = trpc.documents.delete.useMutation({
     onSuccess: () => {
       utils.documents.list.invalidate();
@@ -270,6 +283,21 @@ export default function Library() {
                   >
                     <Brain className="w-3.5 h-3.5" /> Study
                   </Button>
+                  {doc.mimeType.startsWith("image/") && (
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      className="h-8 w-8 p-0"
+                      title="Extract text from image (OCR)"
+                      disabled={ocrDocId === doc.id}
+                      onClick={() => {
+                        setOcrDocId(doc.id);
+                        ocrMutation.mutate({ documentId: doc.id, fileKey: doc.fileKey });
+                      }}
+                    >
+                      {ocrDocId === doc.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                    </Button>
+                  )}
                   <Button
                     size="sm"
                     variant="outline"
@@ -409,7 +437,31 @@ export default function Library() {
             </div>
             <div className="flex-1 overflow-y-auto p-5">
               {previewDoc.mimeType.startsWith("image/") ? (
-                <img src={previewDoc.fileUrl} alt={previewDoc.originalName} className="max-w-full rounded-lg mx-auto" />
+                <div className="space-y-4">
+                  <img src={previewDoc.fileUrl} alt={previewDoc.originalName} className="max-w-full rounded-lg mx-auto" />
+                  {previewDoc.extractedText ? (
+                    <div className="bg-muted/50 rounded-xl p-4">
+                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">Extracted Text (OCR)</p>
+                      <pre className="text-sm text-foreground/90 whitespace-pre-wrap font-sans leading-relaxed">{previewDoc.extractedText}</pre>
+                    </div>
+                  ) : (
+                    <div className="flex justify-center">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-2"
+                        disabled={ocrDocId === previewDoc.id}
+                        onClick={() => {
+                          setOcrDocId(previewDoc.id);
+                          ocrMutation.mutate({ documentId: previewDoc.id, fileKey: previewDoc.fileKey });
+                        }}
+                      >
+                        {ocrDocId === previewDoc.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <FileText className="w-3.5 h-3.5" />}
+                        {ocrDocId === previewDoc.id ? "Extracting text..." : "Extract Text from Image (OCR)"}
+                      </Button>
+                    </div>
+                  )}
+                </div>
               ) : previewDoc.mimeType === "application/pdf" ? (
                 <iframe src={previewDoc.fileUrl} className="w-full h-[60vh] rounded-lg border border-border" title={previewDoc.originalName} />
               ) : previewDoc.extractedText ? (

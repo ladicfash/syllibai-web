@@ -47,11 +47,21 @@ export default function StudyLayout({ children }: StudyLayoutProps) {
     <div className="flex flex-col h-full">
       {/* Logo */}
       <div className={cn("flex items-center h-16 px-4 border-b border-white/8 flex-shrink-0", collapsed && "justify-center")}>
-        <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center flex-shrink-0">
-          <GraduationCap className="w-4.5 h-4.5 text-primary-foreground" />
-        </div>
-        {!collapsed && (
-          <span className="ml-2.5 font-semibold text-base text-white tracking-tight">SyllibAI</span>
+        {collapsed ? (
+          <img
+            src="/manus-storage/syllibai-icon_7a0c12a1.jpeg"
+            alt="syllabAI"
+            className="w-8 h-8 rounded-lg object-cover flex-shrink-0"
+          />
+        ) : (
+          <div className="flex items-center gap-2.5">
+            <img
+              src="/manus-storage/syllibai-icon_7a0c12a1.jpeg"
+              alt=""
+              className="w-7 h-7 rounded-lg object-cover flex-shrink-0"
+            />
+            <span className="font-display font-bold text-base text-white tracking-tight">syllabAI</span>
+          </div>
         )}
       </div>
 
