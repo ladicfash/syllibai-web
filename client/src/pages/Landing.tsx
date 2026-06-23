@@ -7,7 +7,7 @@ import {
   Brain, Zap, Clock, FileText, Mic, FlaskConical,
   ArrowRight, CheckCircle2, ChevronRight, Star,
   BookOpen, Target, Calendar, StickyNote, BarChart3,
-  Upload, Layers, Sparkles, TrendingUp, Code2, Landmark
+  Upload, Layers, Sparkles, TrendingUp, Code2, Landmark, Globe
 } from "lucide-react";
 
 const LOGO_URL = "/manus-storage/syllibai-logo_2db0f2cf.png";
@@ -203,9 +203,9 @@ export default function Landing() {
             className="text-lg sm:text-xl text-muted-foreground max-w-2xl leading-relaxed animate-slide-up"
             style={{ animationDelay: "0.1s" }}
           >
-            Upload your notes, syllabi, and textbooks.{" "}
-            <strong className="text-foreground font-semibold">syllabAI</strong> transforms them into
-            flashcards, mind maps, study guides, quizzes, and personalized study plans — instantly.
+            Upload your syllabus, notes, or textbook.{" "}
+            <strong className="text-foreground font-semibold">syllabAI</strong> extracts every deadline,
+            builds your flashcards, maps your knowledge, and schedules your reviews — before you even open a notebook.
           </p>
 
           {/* CTAs */}
@@ -444,6 +444,75 @@ export default function Landing() {
                     <p className="text-sm text-muted-foreground">Excellent clinical reasoning. ECG shows ST elevation in leads II, III, aVF — consistent with inferior STEMI...</p>
                   </div>
                 </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ── Collaborate Section ──────────────────────────────────────── */}
+      <section className="py-28 relative overflow-hidden">
+        <div className="absolute inset-0 landing-grid opacity-30" />
+        <div className="container relative z-10">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
+            {/* Left: copy */}
+            <div className="flex flex-col gap-6">
+              <div className="pill-badge w-fit">
+                <Globe className="w-3 h-3" />
+                Explore & Collaborate
+              </div>
+              <h2 className="font-display text-4xl sm:text-5xl font-bold tracking-tight leading-tight">
+                Share What You Know.{" "}
+                <span className="gradient-text">Learn Together.</span>
+              </h2>
+              <p className="text-muted-foreground text-lg leading-relaxed">
+                Publish your best study sets and notes to the public Explore feed — or keep them private. Anyone can browse; only members can unlock full content.
+              </p>
+              <div className="flex flex-col gap-3">
+                {[
+                  { icon: CheckCircle2, label: "Selective sharing", desc: "Choose exactly which notes and decks to make public" },
+                  { icon: CheckCircle2, label: "Quizlet-style gating", desc: "Guests see previews; full access requires an account" },
+                  { icon: CheckCircle2, label: "Subject tagging", desc: "Browse by subject — Biology, CS, History, and more" },
+                ].map((item) => (
+                  <div key={item.label} className="flex items-start gap-3">
+                    <item.icon className="w-4 h-4 text-primary mt-0.5 flex-shrink-0" />
+                    <div>
+                      <span className="text-sm font-semibold">{item.label}</span>
+                      <span className="text-sm text-muted-foreground"> — {item.desc}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <Button onClick={handleStart} variant="outline" className="gap-2 w-fit">
+                Browse Explore <ArrowRight className="w-4 h-4" />
+              </Button>
+            </div>
+            {/* Right: mock Explore card */}
+            <div className="relative">
+              <div className="absolute inset-0 bg-gradient-to-br from-sky-500/10 to-violet-500/10 rounded-3xl blur-2xl scale-95" />
+              <div className="relative bg-card border border-border rounded-2xl p-6 shadow-2xl space-y-3">
+                <div className="flex items-center justify-between pb-4 border-b border-border">
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-full bg-primary/20 flex items-center justify-center text-xs font-bold text-primary">S</div>
+                    <div>
+                      <p className="text-sm font-semibold">Organic Chemistry — Exam 2</p>
+                      <p className="text-xs text-muted-foreground">by @student · 48 cards</p>
+                    </div>
+                  </div>
+                  <span className="px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 text-[10px] font-semibold">Chemistry</span>
+                </div>
+                {/* Blurred preview cards */}
+                {["Describe the mechanism of an SN2 reaction.", "What is Markovnikov's rule?", "Define chirality and give an example."].map((q, i) => (
+                  <div key={i} className={`bg-muted/50 rounded-xl p-3 ${i > 0 ? "relative overflow-hidden" : ""}`}>
+                    <p className="text-xs text-muted-foreground mb-0.5 font-semibold uppercase tracking-wide">Card {i + 1}</p>
+                    <p className={`text-sm ${i > 0 ? "blur-[3px] select-none" : ""}`}>{q}</p>
+                    {i > 0 && (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <span className="text-[10px] font-semibold text-muted-foreground bg-background/80 px-2 py-0.5 rounded-full border border-border">Sign in to unlock</span>
+                      </div>
+                    )}
+                  </div>
+                ))}
               </div>
             </div>
           </div>

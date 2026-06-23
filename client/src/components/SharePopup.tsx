@@ -9,12 +9,35 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { toast } from "sonner";
-import { Globe, Link2, StickyNote, Layers, Check, Copy, Lock } from "lucide-react";
+import { Globe, Link2, StickyNote, Layers, Check, Copy, Lock, Users } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 const SUBJECTS = [
   "Biology", "Chemistry", "Physics", "Mathematics",
   "History", "Literature", "Computer Science", "Economics", "Psychology", "Other"
+];
+
+type Visibility = "public" | "link" | "private";
+
+const VISIBILITY_OPTIONS: { value: Visibility; icon: typeof Globe; label: string; desc: string }[] = [
+  {
+    value: "public",
+    icon: Globe,
+    label: "Public",
+    desc: "Visible to everyone on the Explore page",
+  },
+  {
+    value: "link",
+    icon: Link2,
+    label: "Link only",
+    desc: "Only accessible via the shared link",
+  },
+  {
+    value: "private",
+    icon: Lock,
+    label: "Private",
+    desc: "Only you can see this",
+  },
 ];
 
 interface SharePopupProps {
@@ -29,7 +52,8 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
   const [noteSubjects, setNoteSubjects] = useState<Record<number, string>>({});
   const [deckSubjects, setDeckSubjects] = useState<Record<number, string>>({});
   const [deckDescriptions, setDeckDescriptions] = useState<Record<number, string>>({});
-  const [publishedLinks, setPublishedLinks] = useState<{ type: string; title: string; url: string }[]>([]);
+  const [visibility, setVisibility] = useState<Visibility>("public");
+  const [publishedLinks, setPublishedLinks] = useState<{ type: string; title: string; url: string; visibility: Visibility }[]>([]);
   const [step, setStep] = useState<"pick" | "done">("pick");
 
   const { data: notes } = trpc.notes.list.useQuery();
@@ -44,8 +68,9 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
     setSelectedDecks(prev => prev.includes(id) ? prev.filter(d => d !== id) : [...prev, id]);
 
   const handlePublish = async () => {
-    const links: { type: string; title: string; url: string }[] = [];
+    const links: { type: string; title: string; url: string; visibility: Visibility }[] = [];
     const base = window.location.origin;
+    const isPublic = visibility === "public";
 
     for (const noteId of selectedNotes) {
       const note = notes?.find(n => n.id === noteId);
@@ -53,11 +78,11 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
       try {
         const res = await publishNoteMut.mutateAsync({
           noteId,
-          isPublic: true,
+          isPublic,
           subject: noteSubjects[noteId],
         });
-        links.push({ type: "note", title: note.title, url: `${base}/explore/note/${res.slug}` });
-      } catch (e) {
+        links.push({ type: "note", title: note.title, url: `${base}/explore/note/${res.slug}`, visibility });
+      } catch {
         toast.error(`Failed to share note: ${note.title}`);
       }
     }
@@ -68,12 +93,12 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
       try {
         const res = await publishDeckMut.mutateAsync({
           deckId,
-          isPublic: true,
+          isPublic,
           description: deckDescriptions[deckId],
           subject: deckSubjects[deckId],
         });
-        links.push({ type: "deck", title: deck.title, url: `${base}/explore/deck/${res.slug}` });
-      } catch (e) {
+        links.push({ type: "deck", title: deck.title, url: `${base}/explore/deck/${res.slug}`, visibility });
+      } catch {
         toast.error(`Failed to share deck: ${deck.title}`);
       }
     }
@@ -92,26 +117,48 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
     setSelectedNotes([]);
     setSelectedDecks([]);
     setPublishedLinks([]);
+    setVisibility("public");
     onClose();
   };
 
   const totalSelected = selectedNotes.length + selectedDecks.length;
+  const isPending = publishNoteMut.isPending || publishDeckMut.isPending;
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
       <DialogContent className="max-w-lg w-full">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-base font-semibold">
-            <Globe className="w-4 h-4 text-[#3b9edd]" />
+            <Users className="w-4 h-4 text-[#3b9edd]" />
             Share to Explore
           </DialogTitle>
         </DialogHeader>
 
         {step === "pick" && (
           <>
-            <p className="text-xs text-muted-foreground -mt-1 mb-3">
-              Choose what to make public. Anyone can browse — only signed-in users see the full content.
+            <p className="text-xs text-muted-foreground -mt-1">
+              Select what to share, choose visibility, and publish. Guests see previews — full content requires sign-in.
             </p>
+
+            {/* Visibility selector */}
+            <div className="grid grid-cols-3 gap-2 my-3">
+              {VISIBILITY_OPTIONS.map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => setVisibility(opt.value)}
+                  className={cn(
+                    "flex flex-col items-center gap-1.5 p-3 rounded-xl border text-center transition-all",
+                    visibility === opt.value
+                      ? "border-[#3b9edd] bg-[#3b9edd]/8 text-[#3b9edd]"
+                      : "border-border hover:border-border/80 hover:bg-muted/30 text-muted-foreground"
+                  )}
+                >
+                  <opt.icon className="w-4 h-4" />
+                  <span className="text-[11px] font-semibold">{opt.label}</span>
+                  <span className="text-[10px] leading-tight opacity-70">{opt.desc}</span>
+                </button>
+              ))}
+            </div>
 
             <Tabs value={tab} onValueChange={v => setTab(v as "notes" | "decks")}>
               <TabsList className="w-full mb-3">
@@ -137,7 +184,7 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
                     No notes yet. Create some in the Notes page.
                   </div>
                 ) : (
-                  <ScrollArea className="h-64">
+                  <ScrollArea className="h-52">
                     <div className="space-y-2 pr-2">
                       {notes.map(note => (
                         <div
@@ -195,7 +242,7 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
                     No study sets yet. Generate flashcards in Study Tools.
                   </div>
                 ) : (
-                  <ScrollArea className="h-64">
+                  <ScrollArea className="h-52">
                     <div className="space-y-2 pr-2">
                       {decks.map(deck => (
                         <div
@@ -261,18 +308,22 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
 
             <div className="flex items-center justify-between pt-3 border-t border-border mt-2">
               <p className="text-xs text-muted-foreground">
-                {totalSelected === 0 ? "Nothing selected" : `${totalSelected} item${totalSelected !== 1 ? "s" : ""} selected`}
+                {totalSelected === 0
+                  ? "Nothing selected"
+                  : `${totalSelected} item${totalSelected !== 1 ? "s" : ""} · ${VISIBILITY_OPTIONS.find(o => o.value === visibility)?.label}`}
               </p>
               <div className="flex gap-2">
                 <Button variant="ghost" size="sm" onClick={handleClose}>Cancel</Button>
                 <Button
                   size="sm"
-                  disabled={totalSelected === 0 || publishNoteMut.isPending || publishDeckMut.isPending}
+                  disabled={totalSelected === 0 || isPending}
                   onClick={handlePublish}
                   className="bg-[#3b9edd] hover:bg-[#2d8bc7] text-white"
                 >
-                  <Globe className="w-3.5 h-3.5 mr-1.5" />
-                  Publish {totalSelected > 0 ? `(${totalSelected})` : ""}
+                  {visibility === "public" ? <Globe className="w-3.5 h-3.5 mr-1.5" /> :
+                   visibility === "link" ? <Link2 className="w-3.5 h-3.5 mr-1.5" /> :
+                   <Lock className="w-3.5 h-3.5 mr-1.5" />}
+                  {isPending ? "Sharing..." : `Share ${totalSelected > 0 ? `(${totalSelected})` : ""}`}
                 </Button>
               </div>
             </div>
@@ -283,10 +334,14 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
           <div className="space-y-3">
             <div className="flex items-center gap-2 text-sm font-medium text-green-600 dark:text-green-400">
               <Check className="w-4 h-4" />
-              Published successfully
+              Shared successfully
             </div>
             <p className="text-xs text-muted-foreground">
-              These items are now visible on the Explore page. Share the links below with anyone.
+              {visibility === "public"
+                ? "These items are now visible on the Explore page."
+                : visibility === "link"
+                ? "These items are accessible via the links below — not listed publicly."
+                : "These items are saved privately. Only you can see them."}
             </p>
             <ScrollArea className="max-h-48">
               <div className="space-y-2 pr-1">
@@ -303,6 +358,7 @@ export function SharePopup({ open, onClose }: SharePopupProps) {
                     <button
                       onClick={() => copyLink(link.url)}
                       className="p-1.5 rounded hover:bg-muted transition-colors flex-shrink-0"
+                      title="Copy link"
                     >
                       <Copy className="w-3.5 h-3.5 text-muted-foreground" />
                     </button>

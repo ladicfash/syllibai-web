@@ -65,13 +65,13 @@
 - [x] Build first-time T&C agreement modal (3 checkboxes required, stored in DB, blocks app until accepted)
 
 ## Phase 9: UI Revamp & Collaboration
-- [ ] Revamp sidebar navigation: cleaner grouping, better icons, section labels
-- [ ] Revamp dashboard home: stats widgets, recent activity, quick actions
+- [x] Revamp sidebar navigation: cleaner grouping, better icons, section labels
+- [x] Revamp dashboard home: stats widgets, daily goal ring, quick access grid, recent docs, upcoming deadlines
 - [ ] Revamp landing page: tighter SaaS feel, better hero copy, feature highlights
-- [ ] Add public Explore/Discover page (no login required to browse)
-- [ ] Quizlet-style gating: public can see titles/previews, login required for full content
-- [ ] Add isPublic flag to notes, flashcard decks, and study sets in DB schema
-- [ ] Build Share popup: choose content type (notes/decks), select items, set visibility (public/link/collab)
+- [x] Add public Explore/Discover page (no login required to browse)
+- [x] Quizlet-style gating: public can see titles/previews, login required for full content
+- [x] Add isPublic flag to notes, flashcard decks, and study sets in DB schema
+- [x] Build Share popup: choose content type (notes/decks), select items, set visibility (public/link/collab)
 - [ ] Build Collab Space: shared study sets visible to invited users or public
 - [ ] Add public profile page: user's shared decks and notes browsable by others
 - [ ] Access gate component: blur/lock overlay on content for logged-out users
