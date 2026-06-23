@@ -1,0 +1,1 @@
+ALTER TABLE `video_notes` ADD `chapters` json DEFAULT ('[]') NOT NULL;

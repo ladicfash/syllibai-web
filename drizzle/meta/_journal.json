@@ -64,6 +64,13 @@
       "when": 1782237696009,
       "tag": "0008_calm_shocker",
       "breakpoints": true
+    },
+    {
+      "idx": 9,
+      "version": "5",
+      "when": 1782242768608,
+      "tag": "0009_famous_black_panther",
+      "breakpoints": true
     }
   ]
 }

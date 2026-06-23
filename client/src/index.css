@@ -18,8 +18,8 @@
   --color-card-foreground: oklch(0.12 0.02 240);
   --color-popover: oklch(1 0 0);
   --color-popover-foreground: oklch(0.12 0.02 240);
-  --color-primary: oklch(0.72 0.18 85);   /* Gold accent for light mode */
-  --color-primary-foreground: oklch(0.12 0.02 85);
+  --color-primary: oklch(0.62 0.19 232);   /* Blue accent for light mode */
+  --color-primary-foreground: oklch(0.96 0.005 240);
   --color-secondary: oklch(0.94 0.01 85);
   --color-secondary-foreground: oklch(0.22 0.02 85);
   --color-muted: oklch(0.95 0.006 85);
