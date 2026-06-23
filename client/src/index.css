@@ -86,13 +86,6 @@
   --color-study-sidebar-fg: oklch(0.90 0.01 240);
 }
 
-/* ── User Accent Override ────────────────────────────────────────────────── */
-/* When the user picks a custom accent, it overrides --color-primary via JS */
-:root:has([data-user-accent]) {
-  --color-primary: var(--user-accent);
-  --color-ring: var(--user-accent);
-}
-
 /* ── Base Styles ──────────────────────────────────────────────────────────── */
 @layer base {
   * {

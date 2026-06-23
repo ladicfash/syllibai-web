@@ -51,11 +51,13 @@ function AccentColorApplier() {
   useEffect(() => {
     const accent = (settings as any)?.accentColor;
     if (accent) {
-      document.documentElement.style.setProperty("--user-accent", accent);
-      document.documentElement.setAttribute("data-user-accent", accent);
+      // Directly set the primary color CSS variables to the user's chosen accent
+      document.documentElement.style.setProperty("--color-primary", accent);
+      document.documentElement.style.setProperty("--color-ring", accent);
     } else {
-      document.documentElement.style.removeProperty("--user-accent");
-      document.documentElement.removeAttribute("data-user-accent");
+      // Reset to defaults by removing the inline styles
+      document.documentElement.style.removeProperty("--color-primary");
+      document.documentElement.style.removeProperty("--color-ring");
     }
   }, [(settings as any)?.accentColor]);
   return null;
