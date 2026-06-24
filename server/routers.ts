@@ -790,20 +790,35 @@ flowchart TD
       };
     }),
     simulation: protectedProcedure.input(z.object({
-      domain: z.enum(["medical", "finance", "coding", "history"]),
+      domain: z.enum(["medical", "finance", "coding", "history", "custom"]),
+      customDomain: z.string().max(120).optional(),
+      difficulty: z.enum(["beginner", "intermediate", "advanced"]).default("intermediate"),
+      mode: z.enum(["guided", "branching", "interview"]).default("branching"),
       scenario: z.string().max(2000),
-      userResponse: z.string().max(2000).optional(),
+      userResponse: z.string().max(2500).optional(),
       conversationHistory: z.array(z.object({ role: z.enum(["user", "assistant"]), content: z.string() })).optional(),
     })).mutation(async ({ ctx, input }) => {
       const domainPrompts: Record<string, string> = {
-        medical: "You are a medical simulation instructor. Present realistic clinical scenarios where the student must make diagnostic and treatment decisions. Provide feedback on their reasoning, mention what a real clinician would consider, and explain consequences of different choices. Be educational but realistic.",
-        finance: "You are a financial simulation instructor. Present realistic market scenarios, investment decisions, or financial planning situations. Guide the student through analysis frameworks, risk assessment, and decision-making. Explain real-world implications.",
-        coding: "You are a senior software engineer running a technical interview simulation. Present coding problems, system design challenges, or debugging scenarios. Evaluate the student's approach, suggest improvements, and explain best practices.",
-        history: "You are a historical simulation guide. Present 'what if' scenarios where historical facts are altered. Help the student analyze cause-and-effect relationships, explore alternative outcomes, and understand historical forces. Be academically rigorous.",
+        medical: "You are a medical simulation instructor. Run realistic original clinical scenarios for education. Ask for history, exam, tests, differential diagnosis, and management decisions. Do not provide real medical advice; keep it educational and include safety caveats when needed.",
+        finance: "You are a finance simulation instructor. Run realistic investment, budgeting, market, or portfolio decision scenarios. Explain risk, assumptions, tradeoffs, and consequences. Do not provide personalized financial advice; keep it educational.",
+        coding: "You are a senior software engineer running a technical interview and system design simulator. Evaluate reasoning, ask clarifying questions, discuss tradeoffs, and give implementation feedback.",
+        history: "You are a historical simulation guide. Run rigorous what-if or decision scenarios grounded in historical context. Focus on causality, evidence, tradeoffs, and downstream consequences.",
+        custom: `You are an expert simulation instructor for ${input.customDomain || "a custom subject"}. Create role-aware educational scenarios with decisions, feedback, and consequences.`,
       };
-      const messages: any[] = [{ role: "system", content: domainPrompts[input.domain] }];
-      if (input.conversationHistory) messages.push(...input.conversationHistory);
-      messages.push({ role: "user", content: input.userResponse ?? `Start a new ${input.domain} simulation scenario: ${input.scenario}` });
+      const modeRules: Record<string, string> = {
+        guided: "GUIDED COACH MODE: Ask one focused question at a time. Give hints if the learner struggles. Explain after each learner response.",
+        branching: "BRANCHING MODE: Present a scenario, then offer 3-4 labeled choices (A/B/C/D). After the learner chooses, show consequences, feedback, and the next decision point.",
+        interview: "INTERVIEW MODE: Ask probing questions, evaluate the learner's answer, score reasoning qualitatively, and escalate difficulty gradually.",
+      };
+      const difficultyRules: Record<string, string> = {
+        beginner: "Beginner difficulty: define terms, keep cognitive load manageable, and give supportive hints.",
+        intermediate: "Intermediate difficulty: require applied reasoning, prioritization, and explanation of tradeoffs.",
+        advanced: "Advanced difficulty: include ambiguity, edge cases, competing priorities, and require expert-level reasoning.",
+      };
+      const systemPrompt = `${domainPrompts[input.domain]}\n${modeRules[input.mode]}\n${difficultyRules[input.difficulty]}\n\nFormatting rules:\n- Use markdown.\n- Keep each turn interactive; do not solve the whole scenario at once.\n- Include sections when useful: Situation, Available Information, Decision Point, Options, Feedback, Consequences, Next Step.\n- If offering choices, label them clearly A, B, C, D.\n- Track learner reasoning and give actionable feedback.\n- Never copy proprietary exam/question-bank content; create original scenarios.`;
+      const messages: any[] = [{ role: "system", content: systemPrompt }];
+      if (input.conversationHistory) messages.push(...input.conversationHistory.slice(-10));
+      messages.push({ role: "user", content: input.userResponse ?? `Start a new ${input.domain === "custom" ? input.customDomain || "custom" : input.domain} simulation: ${input.scenario}` });
       const res = await invokeLLM({ messages });
       const simContent = res.choices[0].message.content;
 return { response: (typeof simContent === 'string' ? simContent.trim() : JSON.stringify(simContent)) ?? "" };
