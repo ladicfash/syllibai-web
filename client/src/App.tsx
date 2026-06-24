@@ -8,7 +8,7 @@ import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
 import SourceHub from "./pages/SourceHub";
-import StudyTools from "./pages/StudyTools";
+import StudyToolsClassic from "./pages/StudyTools";
 import StudyStudio from "./pages/StudyStudio";
 import Timer from "./pages/Timer";
 import Planner from "./pages/Planner";
@@ -139,8 +139,11 @@ function AppRoutes() {
         <Route path="/source-hub">
           {isAuthenticated ? <StudyLayout><SourceHub /></StudyLayout> : <Landing />}
         </Route>
+        <Route path="/study-tools/classic">
+          {isAuthenticated ? <StudyLayout><StudyToolsClassic /></StudyLayout> : <Landing />}
+        </Route>
         <Route path="/study-tools">
-          {isAuthenticated ? <StudyLayout><StudyTools /></StudyLayout> : <Landing />}
+          {isAuthenticated ? <StudyLayout><StudyStudio /></StudyLayout> : <Landing />}
         </Route>
         <Route path="/study-studio">
           {isAuthenticated ? <StudyLayout><StudyStudio /></StudyLayout> : <Landing />}

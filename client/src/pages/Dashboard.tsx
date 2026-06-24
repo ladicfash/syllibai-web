@@ -8,14 +8,14 @@ import { Progress } from "@/components/ui/progress";
 import {
   BookOpen, Brain, Clock, Calendar, Zap, FileText, Target,
   ArrowRight, Flame, Plus, Upload, Mic, StickyNote, Globe,
-  ChevronRight, Activity, BarChart2
+  ChevronRight, Activity, BarChart2, Sparkles
 } from "lucide-react";
 import { formatDistanceToNow, isToday, isThisWeek } from "date-fns";
 import { cn } from "@/lib/utils";
 
 const quickActions = [
   { label: "Upload Document", icon: Upload, path: "/library", accent: "from-primary/20 to-primary/5", iconColor: "text-primary", border: "border-primary/20" },
-  { label: "Study Tools", icon: Brain, path: "/study-tools", accent: "from-violet-500/20 to-violet-500/5", iconColor: "text-violet-500", border: "border-violet-500/20" },
+  { label: "Study Studio", icon: Brain, path: "/study-tools", accent: "from-violet-500/20 to-violet-500/5", iconColor: "text-violet-500", border: "border-violet-500/20" },
   { label: "Start Timer", icon: Clock, path: "/timer", accent: "from-amber-500/20 to-amber-500/5", iconColor: "text-amber-500", border: "border-amber-500/20" },
   { label: "Voice Notes", icon: Mic, path: "/voice", accent: "from-rose-500/20 to-rose-500/5", iconColor: "text-rose-500", border: "border-rose-500/20" },
   { label: "My Notes", icon: StickyNote, path: "/notes", accent: "from-emerald-500/20 to-emerald-500/5", iconColor: "text-emerald-500", border: "border-emerald-500/20" },
@@ -72,6 +72,8 @@ export default function Dashboard() {
   const dailyProgress = Math.min(100, Math.round((todayMinutes / dailyGoalMinutes) * 100));
 
   const firstName = user?.name?.split(" ")[0] ?? "Student";
+  const recentDoc = docs?.[0];
+  const dueCount = dueCards?.length ?? 0;
 
   return (
     <div className="p-6 max-w-6xl mx-auto space-y-7">
@@ -108,6 +110,43 @@ export default function Dashboard() {
             </div>
           </div>
           <p className="text-[10px] text-muted-foreground text-center leading-tight">Daily<br/>Goal</p>
+        </div>
+      </div>
+
+      {/* Today's command center */}
+      <div className="grid gap-4 lg:grid-cols-[minmax(0,1.25fr)_minmax(0,0.75fr)] animate-slide-up" style={{ animationDelay: "0.04s" }}>
+        <div className="relative overflow-hidden rounded-3xl border bg-card p-5 shadow-sm">
+          <div className="absolute inset-0 bg-gradient-to-br from-primary/10 via-transparent to-violet-500/5 pointer-events-none" />
+          <div className="relative flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-widest text-primary">Today’s Study Command Center</p>
+              <h2 className="mt-1 text-xl font-bold">{dueCount > 0 ? `${dueCount} cards due today` : "You’re caught up today"}</h2>
+              <p className="mt-1 text-sm text-muted-foreground">
+                {dueCount > 0 ? "Start with spaced review, then continue your latest document in Study Studio." : "No due cards. Build new study assets or continue your latest source."}
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              <Link href="/spaced-rep"><Button className="gap-2"><Zap className="w-4 h-4" /> Start Review</Button></Link>
+              <Link href={recentDoc ? `/study-tools?doc=${recentDoc.id}` : "/study-tools"}><Button variant="outline" className="gap-2"><Brain className="w-4 h-4" /> Study Studio</Button></Link>
+            </div>
+          </div>
+        </div>
+        <div className="rounded-3xl border bg-card p-5 shadow-sm">
+          <p className="text-sm font-semibold flex items-center gap-2"><Target className="w-4 h-4 text-primary" /> Recommended next action</p>
+          {recentDoc ? (
+            <div className="mt-3 space-y-3">
+              <div className="rounded-2xl bg-muted/40 p-3">
+                <p className="text-sm font-medium truncate">{recentDoc.originalName}</p>
+                <p className="text-xs text-muted-foreground mt-1">{recentDoc.wordCount?.toLocaleString() ?? 0} words · ready for exam review</p>
+              </div>
+              <Link href={`/study-tools?doc=${recentDoc.id}`}><Button variant="secondary" className="w-full gap-2"><Sparkles className="w-4 h-4" /> Generate review sheet</Button></Link>
+            </div>
+          ) : (
+            <div className="mt-3 space-y-3 text-sm text-muted-foreground">
+              <p>Upload a syllabus, PDF, or lecture notes to unlock AI study templates.</p>
+              <Link href="/library"><Button variant="secondary" className="w-full gap-2"><Upload className="w-4 h-4" /> Upload first document</Button></Link>
+            </div>
+          )}
         </div>
       </div>
 

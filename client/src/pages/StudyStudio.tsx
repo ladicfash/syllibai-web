@@ -1,5 +1,6 @@
-import { useMemo, useState, type ElementType } from "react";
+import { useEffect, useMemo, useState, type ElementType } from "react";
 import { trpc } from "@/lib/trpc";
+import { useSearch } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Textarea } from "@/components/ui/textarea";
@@ -29,6 +30,10 @@ import {
   Target,
   Wand2,
 } from "lucide-react";
+import { PageHero } from "@/components/study/PageHero";
+import { EmptyState } from "@/components/study/EmptyState";
+import { AiGenerationStepper } from "@/components/study/AiGenerationStepper";
+import { OutputAssetHeader } from "@/components/study/OutputAssetHeader";
 
 type TemplateId = "key_points" | "cornell" | "exam_review" | "practice_quiz" | "study_guide" | "glossary" | "concept_outline" | "weak_spots";
 type Depth = "concise" | "standard" | "deep";
@@ -117,9 +122,11 @@ const TEMPLATES: Array<{
 ];
 
 export default function StudyStudio() {
+  const search = useSearch();
+  const preselectedDocId = new URLSearchParams(search).get("doc");
   const { data: docs = [], isLoading: docsLoading } = trpc.documents.list.useQuery();
   const utils = trpc.useUtils();
-  const [selectedDocIds, setSelectedDocIds] = useState<number[]>([]);
+  const [selectedDocIds, setSelectedDocIds] = useState<number[]>(preselectedDocId ? [Number(preselectedDocId)] : []);
   const [selectedTemplate, setSelectedTemplate] = useState<TemplateId>("exam_review");
   const [depth, setDepth] = useState<Depth>("deep");
   const [examType, setExamType] = useState("");
@@ -131,10 +138,22 @@ export default function StudyStudio() {
   const selectedWords = selectedDocs.reduce((sum, doc) => sum + (doc.wordCount ?? 0), 0);
   const template = TEMPLATES.find((item) => item.id === selectedTemplate)!;
 
+  useEffect(() => {
+    if (preselectedDocId) setSelectedDocIds([Number(preselectedDocId)]);
+  }, [preselectedDocId]);
+
   const createNote = trpc.notes.create.useMutation({
     onSuccess: () => {
       utils.notes.list.invalidate();
       toast.success("Saved to Notes");
+    },
+    onError: (err) => toast.error(err.message),
+  });
+
+  const createFlashcards = trpc.ai.generateFlashcards.useMutation({
+    onSuccess: () => {
+      utils.decks.list.invalidate();
+      toast.success("Flashcards created from this output");
     },
     onError: (err) => toast.error(err.message),
   });
@@ -169,21 +188,30 @@ export default function StudyStudio() {
     setTimeout(() => setCopied(false), 1600);
   };
 
+  const downloadMarkdown = () => {
+    const blob = new Blob([output], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `${template.title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.md`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const makeFlashcardsFromOutput = () => {
+    if (!output.trim()) return;
+    createFlashcards.mutate({ text: output.slice(0, 12000), difficulty: "intermediate", style: "application", count: 16 });
+  };
+
   return (
     <div className="h-full overflow-y-auto bg-background">
       <div className="max-w-7xl mx-auto p-4 md:p-6 space-y-5">
-        <div className="relative overflow-hidden rounded-3xl border bg-card p-6 md:p-8 shadow-sm">
-          <div className="absolute inset-0 bg-gradient-to-br from-primary/12 via-transparent to-transparent pointer-events-none" />
-          <div className="relative flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
-            <div>
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/5 px-3 py-1 text-xs font-semibold text-primary mb-3">
-                <Wand2 className="w-3.5 h-3.5" /> Advanced Study Studio
-              </div>
-              <h1 className="text-3xl font-bold tracking-tight font-serif">AI Study Tools, redesigned</h1>
-              <p className="text-muted-foreground mt-2 max-w-2xl">
-                Choose documents, pick an academic template, set the depth, and generate polished exam-prep or note-taking materials that look and read like a real study product.
-              </p>
-            </div>
+        <PageHero
+          eyebrow="Advanced Study Studio"
+          title="AI Study Tools, redesigned"
+          description="Choose documents, pick an academic template, set the depth, and generate polished exam-prep or note-taking materials that look and read like a real study product."
+          icon={Wand2}
+          stats={
             <div className="grid grid-cols-3 gap-2 min-w-[280px]">
               <div className="rounded-2xl border bg-background/70 p-3">
                 <LibraryBig className="w-4 h-4 text-primary mb-1" />
@@ -201,8 +229,8 @@ export default function StudyStudio() {
                 <p className="text-[11px] text-muted-foreground">templates</p>
               </div>
             </div>
-          </div>
-        </div>
+          }
+        />
 
         <div className="grid gap-5 xl:grid-cols-[310px_minmax(0,1fr)_380px]">
           <aside className="space-y-4">
@@ -315,32 +343,31 @@ export default function StudyStudio() {
           </main>
 
           <aside className="xl:sticky xl:top-5 h-fit rounded-2xl border bg-card shadow-sm overflow-hidden">
-            <div className="p-4 border-b bg-muted/20 flex items-center justify-between gap-2">
-              <div>
-                <p className="font-semibold">Output Preview</p>
-                <p className="text-xs text-muted-foreground">{template.title} · {depth} depth</p>
-              </div>
-              {output && (
-                <div className="flex gap-1">
-                  <Button variant="ghost" size="sm" onClick={copyOutput} className="gap-1.5">{copied ? <CheckCircle2 className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />} Copy</Button>
-                  <Button variant="ghost" size="sm" onClick={() => createNote.mutate({ title: template.title, content: output })}>Save</Button>
-                </div>
-              )}
-            </div>
+            <OutputAssetHeader
+              title="Output Preview"
+              subtitle={`${template.title} · ${depth} depth`}
+              sources={selectedDocs.map((doc) => doc.originalName)}
+              copied={copied}
+              onCopy={output ? copyOutput : undefined}
+              onSave={output ? () => createNote.mutate({ title: template.title, content: output }) : undefined}
+              onDownload={output ? downloadMarkdown : undefined}
+              onFlashcards={output ? makeFlashcardsFromOutput : undefined}
+              flashcardsPending={createFlashcards.isPending}
+            />
             <div className="p-4 max-h-[720px] overflow-y-auto">
               {generate.isPending ? (
                 <div className="space-y-3">
-                  <div className="rounded-2xl border bg-primary/5 p-4 text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="w-4 h-4 animate-spin text-primary" /> Building advanced study material...</div>
+                  <AiGenerationStepper active />
                   {[1, 2, 3, 4, 5, 6].map((i) => <Skeleton key={i} className="h-5 w-full" />)}
                 </div>
               ) : output ? (
                 <div className="streamdown-content text-sm"><Streamdown>{output}</Streamdown></div>
               ) : (
-                <div className="py-16 text-center text-muted-foreground">
-                  <SearchCheck className="w-12 h-12 mx-auto mb-4 opacity-25" />
-                  <p className="font-medium text-foreground">No output yet</p>
-                  <p className="text-sm mt-1">Select documents, choose a template, then generate a polished study artifact.</p>
-                </div>
+                <EmptyState
+                  icon={SearchCheck}
+                  title="No output yet"
+                  description="Select documents, choose a template, and generate a polished study artifact. Your output will appear here with copy, save, markdown export, and flashcard actions."
+                />
               )}
             </div>
           </aside>

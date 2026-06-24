@@ -289,7 +289,7 @@ export default function Library() {
                     className="h-8 w-8 p-0"
                     title="Chat with document"
                     disabled={!doc.extractedText}
-                    onClick={() => navigate(`/study-tools?doc=${doc.id}&tab=chat`)}
+                    onClick={() => navigate(`/study-tools/classic?doc=${doc.id}&tab=chat`)}
                   >
                     <MessageCircle className="w-3.5 h-3.5" />
                   </Button>

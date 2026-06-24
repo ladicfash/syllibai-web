@@ -11,6 +11,7 @@ import {
   Compass, Timer, ListTodo, Users, Settings, Video, Database, Wand2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { trpc } from "@/lib/trpc";
 
 const navSections = [
   {
@@ -26,8 +27,7 @@ const navSections = [
     items: [
       { path: "/library",     icon: BookOpen,    label: "Library"          },
       { path: "/source-hub",  icon: Database,    label: "Source Hub"       },
-      { path: "/study-studio", icon: Wand2,      label: "Study Studio"     },
-      { path: "/study-tools", icon: Brain,       label: "Study Tools"      },
+      { path: "/study-tools", icon: Wand2,       label: "Study Studio"     },
       { path: "/spaced-rep",  icon: Zap,         label: "Spaced Repetition"},
       { path: "/voice",       icon: Mic,         label: "Voice Notes"      },
       { path: "/video-notes", icon: Video,        label: "Video Notes"      },
@@ -62,6 +62,7 @@ export default function StudyLayout({ children }: StudyLayoutProps) {
   const [location] = useLocation();
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
+  const { data: dueCards } = trpc.decks.dueCards.useQuery(undefined, { enabled: !!user, staleTime: 60_000 });
 
   useEffect(() => setMobileOpen(false), [location]);
 
@@ -113,7 +114,10 @@ export default function StudyLayout({ children }: StudyLayoutProps) {
                             active ? "text-primary" : "text-white/55"
                           )} />
                           {!collapsed && <span className="truncate">{item.label}</span>}
-                          {!collapsed && active && (
+                          {!collapsed && item.path === "/spaced-rep" && (dueCards?.length ?? 0) > 0 && (
+                            <span className="ml-auto rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-bold text-primary-foreground flex-shrink-0">{dueCards?.length}</span>
+                          )}
+                          {!collapsed && active && item.path !== "/spaced-rep" && (
                             <span className="ml-auto w-1.5 h-1.5 rounded-full bg-primary flex-shrink-0" />
                           )}
                         </div>
