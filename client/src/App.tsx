@@ -1,9 +1,9 @@
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import NotFound from "@/pages/NotFound";
 import { Route, Switch } from "wouter";
 import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
+import NotFound from "@/pages/NotFound";
 import Landing from "./pages/Landing";
 import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
@@ -40,6 +40,8 @@ function MermaidLoader() {
   }, []);
   return null;
 }
+
+
 
 const SESSION_KEY = "syllabai_intro_shown";
 

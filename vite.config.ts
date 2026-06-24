@@ -74,6 +74,31 @@ function writeToLogFile(source: LogSource, entries: unknown[]) {
  * - Files: browserConsole.log, networkRequests.log, sessionReplay.log
  * - Auto-trimmed when exceeding 1MB (keeps newest entries)
  */
+function vitePluginAnalytics(): Plugin {
+  return {
+    name: "optional-analytics-script",
+    transformIndexHtml(html) {
+      const endpoint = process.env.VITE_ANALYTICS_ENDPOINT;
+      const websiteId = process.env.VITE_ANALYTICS_WEBSITE_ID;
+      if (!endpoint || !websiteId) return html;
+      return {
+        html,
+        tags: [
+          {
+            tag: "script",
+            attrs: {
+              src: `${endpoint.replace(/\/$/, "")}/umami`,
+              defer: true,
+              "data-website-id": websiteId,
+            },
+            injectTo: "body",
+          },
+        ],
+      };
+    },
+  };
+}
+
 function vitePluginManusDebugCollector(): Plugin {
   return {
     name: "manus-debug-collector",
@@ -150,7 +175,7 @@ function vitePluginManusDebugCollector(): Plugin {
   };
 }
 
-const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginManusDebugCollector()];
+const plugins = [react(), tailwindcss(), jsxLocPlugin(), vitePluginManusRuntime(), vitePluginAnalytics(), vitePluginManusDebugCollector()];
 
 export default defineConfig({
   plugins,
@@ -167,6 +192,22 @@ export default defineConfig({
   build: {
     outDir: path.resolve(import.meta.dirname, "dist/public"),
     emptyOutDir: true,
+    // Streamdown/Shiki ships many optional syntax assets; keep warnings focused on unexpected app growth.
+    chunkSizeWarningLimit: 10000,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return undefined;
+          if (id.includes("react") || id.includes("scheduler")) return "vendor-react";
+          if (id.includes("@radix-ui") || id.includes("lucide-react") || id.includes("framer-motion")) return "vendor-ui";
+          if (id.includes("streamdown") || id.includes("shiki") || id.includes("katex") || id.includes("hast") || id.includes("remark") || id.includes("rehype") || id.includes("unified")) return "vendor-markdown";
+          if (id.includes("mermaid") || id.includes("cytoscape") || id.includes("dagre") || id.includes("elkjs")) return "vendor-diagrams";
+          if (id.includes("@tanstack") || id.includes("@trpc") || id.includes("superjson")) return "vendor-data";
+          if (id.includes("recharts")) return "vendor-charts";
+          return "vendor-misc";
+        },
+      },
+    },
   },
   server: {
     host: true,
