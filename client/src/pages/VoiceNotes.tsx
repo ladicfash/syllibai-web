@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { MarkdownView } from "@/components/MarkdownView";
+import { EmptyState } from "@/components/study/EmptyState";
 
 type RecordingState = "idle" | "recording" | "stopped" | "processing";
 
@@ -169,7 +170,7 @@ export default function VoiceNotes() {
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
   return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="mobile-page p-6 max-w-3xl mx-auto space-y-6">
       {/* Header */}
       <div className="animate-slide-up">
         <h1 className="text-2xl font-bold font-serif">Voice Notes</h1>
@@ -366,9 +367,11 @@ export default function VoiceNotes() {
             ))}
           </div>
         ) : !savedNotes?.length ? (
-          <div className="study-card p-8 text-center text-muted-foreground text-sm">
-            No saved voice notes yet. Record something and save it above.
-          </div>
+          <EmptyState
+            icon={Mic}
+            title="Capture your first voice note"
+            description="Record a lecture thought, transcribe it, then turn the transcript into summaries, Cornell notes, key points, or flashcards."
+          />
         ) : (
           <div className="space-y-2">
             {savedNotes.map((note) => (

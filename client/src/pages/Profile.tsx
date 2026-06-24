@@ -31,7 +31,7 @@ export default function Profile() {
   const isOwnProfile = user && (!userId || user.id === userId);
 
   return (
-    <div className="p-6 max-w-5xl mx-auto">
+    <div className="mobile-page p-6 max-w-5xl mx-auto">
       {/* Profile header */}
       <div className="flex items-start gap-5 mb-8 pb-8 border-b border-border">
         <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary/30 to-violet-500/30 flex items-center justify-center flex-shrink-0">

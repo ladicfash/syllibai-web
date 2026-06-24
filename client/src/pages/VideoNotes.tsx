@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { MarkdownView } from "@/components/MarkdownView";
+import { EmptyState } from "@/components/study/EmptyState";
 
 const MAX_VIDEOS = 20;
 const MAX_FILE_SIZE_MB = 200;
@@ -206,7 +207,7 @@ export default function VideoNotes() {
     `${Math.floor(s / 60).toString().padStart(2, "0")}:${(s % 60).toString().padStart(2, "0")}`;
 
   return (
-    <div className="p-6 max-w-4xl mx-auto space-y-6">
+    <div className="mobile-page p-6 max-w-4xl mx-auto space-y-6">
       {/* Header */}
       <div className="animate-slide-up">
         <h1 className="text-2xl font-bold font-serif">Video Notes</h1>
@@ -353,9 +354,11 @@ export default function VideoNotes() {
             ))}
           </div>
         ) : !videoNotes?.length ? (
-          <div className="study-card p-8 text-center text-muted-foreground text-sm">
-            No saved video notes yet. Record or upload a video above.
-          </div>
+          <EmptyState
+            icon={Video}
+            title="No video notes yet"
+            description="Record from your camera or upload a lecture clip, then transcribe it into summaries, Cornell notes, and flashcards."
+          />
         ) : (
           <div className="space-y-3">
             {videoNotes.map((note) => (

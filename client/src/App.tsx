@@ -224,6 +224,7 @@ function AppRoutes() {
 function App() {
   return (
     <ErrorBoundary>
+      <a href="#main-content" className="skip-link">Skip to content</a>
       <ThemeProvider defaultTheme="light" switchable>
         <TooltipProvider>
           <MermaidLoader />

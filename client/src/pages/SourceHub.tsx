@@ -164,7 +164,7 @@ export default function SourceHub() {
   };
 
   return (
-    <div className="h-full overflow-y-auto bg-background">
+    <div className="h-full overflow-y-auto bg-background mobile-page">
       <div className="max-w-7xl mx-auto p-4 md:p-8 space-y-6">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
           <div>

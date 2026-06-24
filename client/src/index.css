@@ -123,8 +123,58 @@
   /* Selection */
   ::selection { @apply bg-primary/20 text-foreground; }
 
-  /* Focus */
+  /* Focus + accessibility */
   :focus-visible { @apply outline-2 outline-ring outline-offset-2; }
+
+  button, a, input, select, textarea, [role="button"] {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  @media (max-width: 640px) {
+    button, [role="button"], a, input, select, textarea {
+      min-height: 44px;
+    }
+    h1 { line-height: 1.15; }
+    table { display: block; max-width: 100%; overflow-x: auto; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after {
+      animation-duration: 0.001ms !important;
+      animation-iteration-count: 1 !important;
+      scroll-behavior: auto !important;
+      transition-duration: 0.001ms !important;
+    }
+  }
+}
+
+.skip-link {
+  position: fixed;
+  left: 0.75rem;
+  top: 0.75rem;
+  z-index: 9999;
+  transform: translateY(-150%);
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-foreground);
+  padding: 0.5rem 0.875rem;
+  font-size: 0.875rem;
+  font-weight: 700;
+  box-shadow: 0 10px 30px oklch(0 0 0 / 0.20);
+}
+.skip-link:focus { transform: translateY(0); }
+
+@media (max-width: 640px) {
+  .mobile-page {
+    padding: 1rem !important;
+  }
+  .mobile-stack {
+    display: flex !important;
+    flex-direction: column !important;
+  }
+  .mobile-full {
+    width: 100% !important;
+  }
 }
 
 /* ── Keyframes ────────────────────────────────────────────────────────────── */

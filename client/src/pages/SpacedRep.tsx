@@ -4,9 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { Zap, Brain, CheckCheck, RotateCcw, TrendingUp, Calendar, Star, ChevronRight } from "lucide-react";
+import { Zap, Brain, CheckCheck, RotateCcw, TrendingUp, Calendar, Star, ChevronRight, Wand2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
+import { EmptyState } from "@/components/study/EmptyState";
+import { Link } from "wouter";
 
 const QUALITY_BUTTONS = [
   { quality: 0, label: "Blackout", desc: "Complete blank", color: "border-red-400 text-red-600 hover:bg-red-50 dark:hover:bg-red-950/30" },
@@ -54,7 +56,7 @@ export default function SpacedRep() {
   };
 
   if (isLoading) return (
-    <div className="p-6 max-w-3xl mx-auto space-y-6">
+    <div className="mobile-page p-6 max-w-3xl mx-auto space-y-6">
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-64 w-full rounded-2xl" />
     </div>
@@ -101,13 +103,12 @@ export default function SpacedRep() {
           </Button>
         </div>
       ) : cards.length === 0 ? (
-        <div className="study-card p-10 text-center animate-fade-in">
-          <div className="w-16 h-16 rounded-full bg-emerald-100 dark:bg-emerald-950/30 flex items-center justify-center mx-auto mb-4">
-            <CheckCheck className="w-8 h-8 text-emerald-500" />
-          </div>
-          <h2 className="text-xl font-bold mb-2">All caught up!</h2>
-          <p className="text-muted-foreground text-sm">No cards are due for review right now. Generate flashcards from your documents to build your deck.</p>
-        </div>
+        <EmptyState
+          icon={CheckCheck}
+          title="All caught up"
+          description="No cards are due right now. Keep the habit going by generating a new deck in Study Studio or checking back tomorrow."
+          actions={<Link href="/study-tools"><Button className="gap-2"><Wand2 className="w-4 h-4" /> Open Study Studio</Button></Link>}
+        />
       ) : card ? (
         <div className="space-y-4 animate-fade-in">
           {/* Progress */}

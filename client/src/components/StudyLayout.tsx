@@ -265,7 +265,7 @@ export default function StudyLayout({ children }: StudyLayoutProps) {
         </header>
 
         {/* Page Content */}
-        <main className="flex-1 overflow-y-auto">
+        <main id="main-content" tabIndex={-1} className="flex-1 overflow-y-auto focus:outline-none">
           {children}
         </main>
       </div>

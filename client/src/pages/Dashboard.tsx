@@ -78,7 +78,7 @@ export default function Dashboard() {
   const dueCount = dueCards?.length ?? 0;
 
   return (
-    <div className="p-6 max-w-6xl mx-auto space-y-7">
+    <div className="mobile-page p-6 max-w-6xl mx-auto space-y-7">
 
       {/* Header */}
       <div className="flex items-start justify-between animate-slide-up">

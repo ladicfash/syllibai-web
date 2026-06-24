@@ -12,6 +12,7 @@ import { Plus, Calendar, CheckCircle2, Circle, Clock, Trash2, Sparkles,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import SyllabusUpload from "@/components/SyllabusUpload";
+import { EmptyState } from "@/components/study/EmptyState";
 import { format, isToday, isTomorrow, isPast, addDays, startOfMonth, endOfMonth, eachDayOfInterval, isSameDay, isSameMonth } from "date-fns";
 
 const PRIORITY_COLORS = {
@@ -106,7 +107,7 @@ export default function Planner() {
   const tasksByDay = (day: Date) => tasks?.filter(t => t.dueDate && isSameDay(new Date(t.dueDate), day)) ?? [];
 
   return (
-    <div className="p-6 max-w-5xl mx-auto space-y-6">
+    <div className="mobile-page p-6 max-w-5xl mx-auto space-y-6">
       {/* Header */}
       <div className="flex items-center justify-between animate-slide-up">
         <div>
@@ -154,10 +155,12 @@ export default function Planner() {
           {isLoading ? (
             Array.from({ length: 4 }).map((_, i) => <Skeleton key={i} className="h-16 rounded-xl" />)
           ) : filteredTasks.length === 0 ? (
-            <div className="text-center py-16 study-card">
-              <Calendar className="w-12 h-12 text-muted-foreground/20 mx-auto mb-4" />
-              <p className="text-muted-foreground">No tasks yet. Add your first task or detect deadlines from a document.</p>
-            </div>
+            <EmptyState
+              icon={Calendar}
+              title={filter === "done" ? "No completed tasks yet" : "Plan your next study move"}
+              description="Add tasks manually, detect deadlines from a syllabus, or use AI breakdown to turn big assignments into manageable steps."
+              actions={<><Button size="sm" onClick={() => setShowAdd(true)} className="gap-1.5"><Plus className="w-4 h-4" /> Add Task</Button><Button size="sm" variant="outline" onClick={() => setShowAI(true)} className="gap-1.5"><Sparkles className="w-4 h-4" /> Detect Deadlines</Button></>}
+            />
           ) : (
             filteredTasks.map((task, i) => {
               const dueLabel = getDueDateLabel(task.dueDate ?? null);

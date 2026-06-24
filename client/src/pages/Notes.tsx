@@ -11,6 +11,7 @@ import {
   FolderPlus, Folder, FolderOpen, ChevronDown, ChevronRight, FolderInput, Palette,
 } from "lucide-react";
 import { SharePopup } from "@/components/SharePopup";
+import { EmptyState } from "@/components/study/EmptyState";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 
@@ -403,7 +404,7 @@ export default function Notes() {
   const isLoading = notesLoading || foldersLoading;
 
   return (
-    <div className="p-6 space-y-6 max-w-7xl mx-auto">
+    <div className="mobile-page p-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3 animate-slide-up">
         <div>
@@ -508,16 +509,12 @@ export default function Notes() {
 
           {/* Empty state */}
           {notes.length === 0 && !isLoading && (
-            <div className="study-card p-12 text-center animate-fade-in">
-              <div className="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center mx-auto mb-4">
-                <Plus className="w-6 h-6 text-primary" />
-              </div>
-              <h3 className="font-semibold text-foreground mb-1">No notes yet</h3>
-              <p className="text-sm text-muted-foreground mb-4">Create your first note to get started</p>
-              <Button onClick={() => setShowAdd(true)} className="gap-1.5">
-                <Plus className="w-4 h-4" /> New Note
-              </Button>
-            </div>
+            <EmptyState
+              icon={Plus}
+              title="Build your study notebook"
+              description="Capture class notes, save AI outputs from Study Studio, organize by folder, and share selected notes when you’re ready."
+              actions={<Button onClick={() => setShowAdd(true)} className="gap-1.5"><Plus className="w-4 h-4" /> New Note</Button>}
+            />
           )}
 
           {/* Search empty state */}

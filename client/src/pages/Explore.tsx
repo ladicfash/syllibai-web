@@ -174,7 +174,7 @@ export default function Explore() {
   );
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="mobile-page p-6 max-w-6xl mx-auto">
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-1">
