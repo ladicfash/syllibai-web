@@ -649,6 +649,36 @@ flowchart TD
       return { content };
     }),
 
+    generateStudyTemplate: protectedProcedure.input(z.object({
+      documentIds: z.array(z.number()).min(1).max(8),
+      template: z.enum(["key_points", "cornell", "exam_review", "practice_quiz", "study_guide", "glossary", "concept_outline", "weak_spots"]),
+      depth: z.enum(["concise", "standard", "deep"]).default("deep"),
+      examType: z.string().max(80).optional(),
+      instructions: z.string().max(1200).optional(),
+    })).mutation(async ({ ctx, input }) => {
+      const { text, docs } = await getCombinedDocumentText(ctx.user.id, input.documentIds, 18000);
+      const templatePrompts: Record<string, string> = {
+        key_points: `Create an advanced high-yield key points brief. Do NOT make a basic list. Group insights by theme, include why each point matters, common traps/misconceptions, and short source-backed evidence snippets.`,
+        cornell: `Create premium Cornell notes with Cue Column, Deep Notes, Synthesis, Memory Hooks, Exam Angles, and Quick Self-Test sections.`,
+        exam_review: `Create an exam-ready review sheet with high-yield concepts, must-know distinctions, likely question angles, common mistakes, mini practice prompts, and a final cram checklist.`,
+        practice_quiz: `Create an original practice quiz. Include mixed difficulty multiple-choice and short-answer questions, answer key, explanations, and why wrong choices are tempting. Do not copy proprietary questions.`,
+        study_guide: `Create a complete study guide with learning objectives, topic hierarchy, explanations, examples, summary tables, practice tasks, and a 30/60/90 minute study plan.`,
+        glossary: `Create a smart glossary of key terms. For each term include definition, plain-English explanation, why it matters, related terms, and a quick recall question.`,
+        concept_outline: `Create a structured concept outline with hierarchy, dependencies, relationships, comparison tables, and what to learn first/next.`,
+        weak_spots: `Create a weak-spot diagnostic: identify concepts students are likely to misunderstand, explain warning signs, give corrective drills, and provide targeted practice questions.`,
+      };
+      const depthRules = {
+        concise: "Be efficient but still structured. Prioritize clarity and fast review.",
+        standard: "Balance detail and readability. Include examples and study actions.",
+        deep: "Go deep. Add advanced synthesis, nuanced distinctions, misconceptions, and exam/reasoning angles.",
+      } as const;
+      const content = await callAI(
+        "You are syllabAI's advanced academic study-material designer. Produce polished, structured, high-signal study materials grounded in the selected document text. Use markdown with tables where helpful. Be specific to the source. Avoid generic filler.",
+        `TEMPLATE: ${input.template}\nDEPTH: ${input.depth} — ${depthRules[input.depth]}\nEXAM/COURSE CONTEXT: ${input.examType || "General academic study"}\nUSER INSTRUCTIONS: ${input.instructions || "None"}\nDOCUMENTS: ${docs.map((d: any) => d.originalName).join(", ")}\n\n${templatePrompts[input.template]}\n\nSOURCE TEXT:\n${text}`
+      );
+      return { content, sources: docs.map((d: any) => ({ id: d.id, name: d.originalName })) };
+    }),
+
     chatWithDocuments: protectedProcedure.input(z.object({
       documentIds: z.array(z.number()).min(1).max(6),
       messages: z.array(z.object({

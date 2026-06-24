@@ -9,6 +9,7 @@ import Dashboard from "./pages/Dashboard";
 import Library from "./pages/Library";
 import SourceHub from "./pages/SourceHub";
 import StudyTools from "./pages/StudyTools";
+import StudyStudio from "./pages/StudyStudio";
 import Timer from "./pages/Timer";
 import Planner from "./pages/Planner";
 import SpacedRep from "./pages/SpacedRep";
@@ -140,6 +141,9 @@ function AppRoutes() {
         </Route>
         <Route path="/study-tools">
           {isAuthenticated ? <StudyLayout><StudyTools /></StudyLayout> : <Landing />}
+        </Route>
+        <Route path="/study-studio">
+          {isAuthenticated ? <StudyLayout><StudyStudio /></StudyLayout> : <Landing />}
         </Route>
         <Route path="/timer">
           {isAuthenticated ? <StudyLayout><Timer /></StudyLayout> : <Landing />}

@@ -8,7 +8,7 @@ import {
   LayoutDashboard, BookOpen, Brain, Clock, Calendar,
   Mic, ChevronLeft, ChevronRight, Sun, Moon,
   LogOut, Menu, X, StickyNote, Zap, FlaskConical,
-  Compass, Timer, ListTodo, Users, Settings, Video, Database
+  Compass, Timer, ListTodo, Users, Settings, Video, Database, Wand2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -26,6 +26,7 @@ const navSections = [
     items: [
       { path: "/library",     icon: BookOpen,    label: "Library"          },
       { path: "/source-hub",  icon: Database,    label: "Source Hub"       },
+      { path: "/study-studio", icon: Wand2,      label: "Study Studio"     },
       { path: "/study-tools", icon: Brain,       label: "Study Tools"      },
       { path: "/spaced-rep",  icon: Zap,         label: "Spaced Repetition"},
       { path: "/voice",       icon: Mic,         label: "Voice Notes"      },
